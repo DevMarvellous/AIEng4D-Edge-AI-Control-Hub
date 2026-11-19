@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# TensorFlow datasets and caches
+tensorflow_datasets/
+datasets/handwriting/
+
+# Temporary files
+.ipynb_checkpoints/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Windows
+Thumbs.db
