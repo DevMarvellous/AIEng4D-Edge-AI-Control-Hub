@@ -1,0 +1,185 @@
+{
+  "rgb_colours": {
+    "red": {
+      "aliases": [
+        "red"
+      ],
+      "rgb": [
+        255,
+        0,
+        0
+      ]
+    },
+    "green": {
+      "aliases": [
+        "green"
+      ],
+      "rgb": [
+        0,
+        255,
+        0
+      ]
+    },
+    "blue": {
+      "aliases": [
+        "blue"
+      ],
+      "rgb": [
+        0,
+        0,
+        255
+      ]
+    },
+    "yellow": {
+      "aliases": [
+        "yellow"
+      ],
+      "rgb": [
+        255,
+        255,
+        0
+      ]
+    },
+    "cyan": {
+      "aliases": [
+        "cyan",
+        "aqua"
+      ],
+      "rgb": [
+        0,
+        255,
+        255
+      ]
+    },
+    "white": {
+      "aliases": [
+        "white"
+      ],
+      "rgb": [
+        255,
+        255,
+        255
+      ]
+    },
+    "orange": {
+      "aliases": [
+        "orange"
+      ],
+      "rgb": [
+        255,
+        128,
+        0
+      ]
+    },
+    "pink": {
+      "aliases": [
+        "pink"
+      ],
+      "rgb": [
+        255,
+        105,
+        180
+      ]
+    },
+    "magenta": {
+      "aliases": [
+        "magenta"
+      ],
+      "rgb": [
+        255,
+        0,
+        255
+      ]
+    },
+    "purple": {
+      "aliases": [
+        "purple",
+        "violet"
+      ],
+      "rgb": [
+        128,
+        0,
+        255
+      ]
+    }
+  },
+  "matrix_symbols": {
+    "smiley": [
+      "smiley",
+      "smile",
+      "happy face",
+      "happy"
+    ],
+    "sad_face": [
+      "sad face",
+      "sad"
+    ],
+    "heart": [
+      "heart"
+    ],
+    "star": [
+      "star"
+    ],
+    "up_arrow": [
+      "up arrow"
+    ],
+    "down_arrow": [
+      "down arrow"
+    ],
+    "left_arrow": [
+      "left arrow"
+    ],
+    "right_arrow": [
+      "right arrow"
+    ],
+    "tick": [
+      "tick",
+      "check mark",
+      "confirmation"
+    ],
+    "cross": [
+      "cross",
+      "x symbol"
+    ],
+    "warning": [
+      "warning",
+      "warning symbol"
+    ],
+    "question": [
+      "question mark"
+    ],
+    "letter_a": [
+      "letter a"
+    ],
+    "letter_b": [
+      "letter b"
+    ],
+    "letter_c": [
+      "letter c"
+    ],
+    "letter_z": [
+      "letter z"
+    ],
+    "number_3": [
+      "number 3"
+    ],
+    "number_5": [
+      "number 5"
+    ],
+    "number_7": [
+      "number 7"
+    ],
+    "number_8": [
+      "number 8"
+    ]
+  },
+  "motor_min_degrees": 0,
+  "motor_max_degrees": 360,
+  "requires_explicit_device_context": true,
+  "requires_valid_parameters": true,
+  "negation_rejection": true,
+  "multiple_parameter_rejection": true,
+  "minimum_confidence": 0.75,
+  "minimum_margin": 0.15,
+  "minimum_token_coverage": 0.35
+}

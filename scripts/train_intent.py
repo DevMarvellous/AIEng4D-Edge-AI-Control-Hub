@@ -1,34 +1,29 @@
 
 """
-AIEng4D - Intent Classification and Command Validation V3
+AIEng4D - Intent Classification and Command Validation
 
 Run from the project root:
-    python train_intent_v3.py
+    python scripts/train_intent.py
 
-Required source dataset:
-    train_intent_esp32.py
-
-The source file is parsed with ast.literal_eval. It is NOT executed.
+This script is self-contained. It does not require an external dataset file.
 
 Outputs:
-    models/intent/intent_model_v3.keras
-    models/intent/intent_model_v3_int8.tflite
-    models/intent/vocabulary_v3.json
-    models/intent/classes_v3.json
-    models/intent/metadata_v3.json
+    models/intent/intent_model.keras
+    models/intent/intent_model_int8.tflite
+    models/intent/vocabulary.json
+    models/intent/classes.json
+    models/intent/metadata.json
     models/intent/command_parser_config.json
-    results/intent_v3_results.txt
+    results/intent_results.txt
 
-Important:
+Architecture:
 - Neural network classifies the requested hardware action.
-- Deterministic parsing extracts parameters.
-- Domain checks and parameter validation reject unsupported commands.
+- Deterministic parsing extracts and validates parameters.
+- Unsupported, incomplete, negated and ambiguous commands are rejected.
 - This script does not control hardware.
 """
 
-import ast
 import json
-import os
 import re
 import random
 from pathlib import Path
@@ -46,21 +41,17 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 SEED = 42
 
-SOURCE_SCRIPT = Path("train_intent_esp32.py")
-
 OUTPUT_DIR = Path("models/intent")
 RESULTS_DIR = Path("results")
 
-MODEL_NAME = "AIEng4D Intent Model V3"
+MODEL_NAME = "AIEng4D Intent Classifier"
 
-# Initial rejection settings.
-# These are starting values, NOT scientifically established limits.
 MIN_CONFIDENCE = 0.75
 MIN_MARGIN = 0.15
 MIN_TOKEN_COVERAGE = 0.35
 
-# Initial software validation limit.
-# The actual safe mechanical range MUST be checked on the real motor.
+# Software placeholder only.
+# Verify the actual motor and mechanical range before deployment.
 MOTOR_MIN_DEGREES = 0
 MOTOR_MAX_DEGREES = 360
 
@@ -75,47 +66,8 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================
-# 2. LOAD THE EXISTING DATASET WITHOUT EXECUTING OLD SCRIPT
+# 2. INTENT DATASET
 # ============================================================
-
-def load_literal_dictionary(script_path, variable_name):
-    if not script_path.exists():
-        raise FileNotFoundError(
-            f"Cannot find {script_path}.\n"
-            "Keep your original training script in this folder, "
-            "or change SOURCE_SCRIPT at the top of this file."
-        )
-
-    tree = ast.parse(
-        script_path.read_text(encoding="utf-8"),
-        filename=str(script_path)
-    )
-
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    if target.id == variable_name:
-                        value = ast.literal_eval(node.value)
-                        if not isinstance(value, dict):
-                            raise TypeError(
-                                f"{variable_name} must be a dictionary."
-                            )
-                        return value
-
-    raise ValueError(
-        f"Could not find a literal dictionary named "
-        f"{variable_name} in {script_path}."
-    )
-
-
-training_data = load_literal_dictionary(
-    SOURCE_SCRIPT, "training_data"
-)
-
-test_data = load_literal_dictionary(
-    SOURCE_SCRIPT, "test_data"
-)
 
 REQUIRED_CLASSES = [
     "LED_ON",
@@ -129,31 +81,303 @@ REQUIRED_CLASSES = [
     "MOTOR_STOP",
 ]
 
-if list(training_data.keys()) != REQUIRED_CLASSES:
-    missing = set(REQUIRED_CLASSES) - set(training_data.keys())
-    extra = set(training_data.keys()) - set(REQUIRED_CLASSES)
 
-    raise ValueError(
-        f"Unexpected source classes. Missing={missing}, extra={extra}"
-    )
+# Reconstructed training dataset.
+# These examples are not claimed to be the original missing dataset.
 
-for intent in REQUIRED_CLASSES:
-    if intent not in test_data:
-        raise ValueError(f"Missing test data for {intent}")
+training_data = {
+
+    "LED_ON": [
+        "turn on the led",
+        "switch on the led",
+        "activate the led",
+        "light up the led",
+        "please turn the led on",
+        "enable the led",
+        "make the led glow",
+        "power on the led",
+        "I want the led on",
+        "turn the indicator led on",
+        "switch the indicator led on",
+        "activate the indicator led",
+        "illuminate the led",
+        "let the led shine",
+        "start the led",
+        "make the led light up",
+        "turn on my led",
+        "please activate the led",
+        "can you switch on the led",
+        "keep the led illuminated",
+    ],
+
+    "LED_OFF": [
+        "turn off the led",
+        "switch off the led",
+        "deactivate the led",
+        "put out the led",
+        "please turn the led off",
+        "disable the led",
+        "stop the led from glowing",
+        "power off the led",
+        "I want the led off",
+        "turn the indicator led off",
+        "switch the indicator led off",
+        "deactivate the indicator led",
+        "extinguish the led",
+        "stop the led",
+        "shut down the led",
+        "make the led go dark",
+        "turn off my led",
+        "please deactivate the led",
+        "can you switch off the led",
+        "keep the led unlit",
+    ],
+
+    "RGB_SET": [
+        "set the rgb to red",
+        "change the rgb to blue",
+        "make the rgb green",
+        "set rgb colour to purple",
+        "change the rgb colour to cyan",
+        "set the rgb led to orange",
+        "make the rgb light yellow",
+        "display red on the rgb",
+        "show blue using the rgb led",
+        "change the light colour to green on rgb",
+        "set the rgb colour to white",
+        "make the rgb glow pink",
+        "change rgb to magenta",
+        "set the rgb light to turquoise",
+        "display orange on the rgb led",
+        "I want purple on the rgb",
+        "please set the rgb to yellow",
+        "change the rgb led colour to white",
+        "make the rgb display cyan",
+        "set the rgb light to violet",
+    ],
+
+    "MATRIX_SHOW": [
+        "show a heart on the matrix",
+        "display a heart on the matrix",
+        "draw a heart on the matrix",
+        "show a smiley face on the matrix",
+        "display a happy face on the matrix",
+        "show a sad face on the matrix",
+        "display the letter A on the matrix",
+        "show letter B on the matrix",
+        "display the number 3 on the matrix",
+        "show number 5 on the matrix",
+        "draw an arrow on the matrix",
+        "show an upward arrow on the matrix",
+        "display a downward arrow on the matrix",
+        "show a check mark on the matrix",
+        "display a cross symbol on the matrix",
+        "show a star on the matrix",
+        "display a warning symbol on the matrix",
+        "show a question mark on the matrix",
+        "draw a square on the matrix",
+        "display a diamond shape on the matrix",
+    ],
+
+    "MATRIX_CLEAR": [
+        "clear the matrix",
+        "erase the matrix display",
+        "blank the matrix",
+        "remove the matrix pattern",
+        "clear the led matrix",
+        "make the matrix blank",
+        "turn off the matrix display",
+        "reset the matrix",
+        "wipe the matrix screen",
+        "empty the matrix display",
+        "remove everything from the matrix",
+        "clear the 8 by 8 display",
+        "make the display go dark",
+        "erase everything on the matrix",
+        "blank out the led matrix",
+        "stop displaying the pattern on the matrix",
+        "clear the dot display",
+        "remove the displayed symbol from the matrix",
+        "switch off the matrix display",
+        "reset the led display",
+    ],
+
+    "MOTOR_MOVE": [
+        "move the motor to 90 degrees",
+        "rotate the motor to 180 degrees",
+        "set the motor position to 45 degrees",
+        "move the motor to 120 degrees",
+        "rotate the motor to 270 degrees",
+        "move the motor to 30 degrees",
+        "set the motor angle to 60 degrees",
+        "position the motor at 150 degrees",
+        "move the motor to 200 degrees",
+        "rotate the motor to 300 degrees",
+        "set the motor to 10 degrees",
+        "move the motor to 360 degrees",
+        "turn the motor to 75 degrees",
+        "position the motor at 225 degrees",
+        "rotate the motor to 135 degrees",
+        "move the motor to 15 degrees",
+        "set the motor position at 240 degrees",
+        "move the stepper motor to 180 degrees",
+        "rotate the stepper motor to 90 degrees",
+        "set the motor angle to 315 degrees",
+    ],
+
+    "MOTOR_CW": [
+        "rotate the motor clockwise",
+        "turn the motor clockwise",
+        "move the motor clockwise",
+        "spin clockwise",
+        "rotate clockwise",
+        "run the motor clockwise",
+        "make the motor turn clockwise",
+        "move clockwise",
+        "start clockwise rotation",
+        "rotate the stepper clockwise",
+        "turn the stepper motor clockwise",
+        "spin the motor in a clockwise direction",
+        "please rotate clockwise",
+        "activate clockwise rotation",
+        "make the motor spin clockwise",
+        "rotate the motor CW",
+        "turn the motor clockwise now",
+        "run clockwise",
+        "move the motor in the clockwise direction",
+        "begin clockwise movement",
+    ],
+
+    "MOTOR_CCW": [
+        "rotate the motor counterclockwise",
+        "turn the motor counterclockwise",
+        "move the motor counterclockwise",
+        "spin counterclockwise",
+        "rotate counterclockwise",
+        "run the motor counterclockwise",
+        "make the motor turn counterclockwise",
+        "move counterclockwise",
+        "start counterclockwise rotation",
+        "rotate the stepper counterclockwise",
+        "turn the stepper motor anticlockwise",
+        "spin the motor in an anticlockwise direction",
+        "please rotate anticlockwise",
+        "activate counterclockwise rotation",
+        "make the motor spin anticlockwise",
+        "rotate the motor counterclockwise now",
+        "turn the motor anticlockwise now",
+        "run counterclockwise",
+        "move the motor in the anticlockwise direction",
+        "begin counterclockwise movement",
+    ],
+
+    "MOTOR_STOP": [
+        "stop the motor",
+        "halt the motor",
+        "stop motor rotation",
+        "turn off the motor",
+        "pause the motor",
+        "cancel motor movement",
+        "freeze the motor",
+        "stop the stepper motor",
+        "halt motor movement",
+        "make the motor stop",
+        "stop rotating",
+        "please stop the motor",
+        "end motor movement",
+        "disable the motor",
+        "stop the rotation",
+        "stop the stepper",
+        "cancel the rotation",
+        "bring the motor to a stop",
+        "motor stop",
+        "halt the stepper",
+    ],
+}
+
+
+# Separate held-out test phrases.
+# These are not used for model fitting or vocabulary construction.
+
+test_data = {
+
+    "LED_ON": [
+        "please illuminate the led",
+        "make my led turn on",
+        "I need the led activated",
+        "switch the led on now",
+        "keep my indicator led on",
+    ],
+
+    "LED_OFF": [
+        "please extinguish the led",
+        "make my led turn off",
+        "I need the led deactivated",
+        "switch the led off now",
+        "disable my indicator led",
+    ],
+
+    "RGB_SET": [
+        "set the rgb led colour to red",
+        "make the rgb light purple",
+        "display cyan with the rgb",
+        "change the rgb to pink",
+        "I want the rgb to glow blue",
+    ],
+
+    "MATRIX_SHOW": [
+        "put a heart on the display matrix",
+        "draw a smiley on the matrix",
+        "display letter C on the matrix",
+        "show an arrow on the led matrix",
+        "put a star on the display matrix",
+    ],
+
+    "MATRIX_CLEAR": [
+        "remove the pattern from the matrix display",
+        "wipe the led matrix clean",
+        "make the 8 by 8 screen empty",
+        "erase the symbol from the matrix display",
+        "turn the led matrix display dark",
+    ],
+
+    "MOTOR_MOVE": [
+        "position the motor at 80 degrees",
+        "move the stepper to 210 degrees",
+        "rotate the motor to 100 degrees",
+        "set the motor angle to 330 degrees",
+        "position the motor at 25 degrees",
+    ],
+
+    "MOTOR_CW": [
+        "start rotating in the clockwise direction",
+        "make the stepper spin clockwise",
+        "begin turning clockwise",
+        "rotate the motor clockwise now",
+    ],
+
+    "MOTOR_CCW": [
+        "start rotating in the counterclockwise direction",
+        "make the stepper spin anticlockwise",
+        "begin turning counterclockwise",
+        "rotate the motor anticlockwise now",
+    ],
+
+    "MOTOR_STOP": [
+        "stop all motor movement",
+        "please halt rotation",
+        "cancel the current motor operation",
+        "bring the stepper to a halt",
+        "stop the motor immediately",
+    ],
+}
 
 
 # ============================================================
 # 3. UNKNOWN TRAINING DATA
 # ============================================================
 
-# These examples teach the model that ordinary unrelated language
-# is not one of the supported hardware actions.
-#
-# The domain and parameter checks later provide additional rejection.
-# No finite UNKNOWN dataset can cover every possible sentence.
-
 unknown_training = [
-    "my name is martel",
     "my name is marvel",
     "what is your name",
     "how are you doing today",
@@ -268,7 +492,6 @@ unknown_test = [
     "calculate the derivative of x squared",
     "I need to charge my phone",
     "please open the browser",
-    "turn on the television",
     "switch off the ceiling fan",
     "make the room brighter",
     "play a song for me",
@@ -280,7 +503,6 @@ unknown_test = [
     "what is the square root of 144",
     "tell me a joke about computers",
     "I am going to class",
-    "I need help with my assignment",
     "what is the weather in Lagos",
     "how do I connect a keyboard",
     "show me a picture of a cat",
@@ -294,10 +516,11 @@ unknown_test = [
 
 
 # ============================================================
-# 4. TEXT PROCESSING
+# 4. TEXT PROCESSING AND DATA VALIDATION
 # ============================================================
 
 TOKEN_PATTERN = r"[a-z0-9]+"
+
 
 def tokenize(text):
     return re.findall(TOKEN_PATTERN, str(text).lower())
@@ -307,7 +530,29 @@ def normalize(text):
     return " ".join(tokenize(text))
 
 
-# Check duplicate phrases across supported classes.
+if list(training_data.keys()) != REQUIRED_CLASSES:
+    raise ValueError("Training dataset class order is invalid.")
+
+if list(test_data.keys()) != REQUIRED_CLASSES:
+    raise ValueError("Test dataset class order is invalid.")
+
+
+# Remove duplicate training phrases within each supported class.
+for intent in REQUIRED_CLASSES:
+    unique = {}
+
+    for phrase in training_data[intent]:
+        key = normalize(phrase)
+
+        if not key:
+            raise ValueError(f"Empty training phrase in {intent}.")
+
+        unique[key] = phrase
+
+    training_data[intent] = list(unique.values())
+
+
+# Check that no training phrase belongs to multiple supported classes.
 phrase_owner = {}
 
 for intent, phrases in training_data.items():
@@ -322,15 +567,58 @@ for intent, phrases in training_data.items():
         phrase_owner[key] = intent
 
 
-# Remove duplicate phrases within the same class.
-for intent in REQUIRED_CLASSES:
-    unique = {}
-    for phrase in training_data[intent]:
-        unique[normalize(phrase)] = phrase
-    training_data[intent] = list(unique.values())
+# Check exact phrase overlap between training and held-out test data.
+supported_train_keys = {
+    normalize(phrase)
+    for phrases in training_data.values()
+    for phrase in phrases
+}
+
+supported_test_keys = {
+    normalize(phrase)
+    for phrases in test_data.values()
+    for phrase in phrases
+}
+
+supported_overlap = supported_train_keys & supported_test_keys
+
+if supported_overlap:
+    raise ValueError(
+        "Supported training/test overlap: "
+        + ", ".join(sorted(supported_overlap))
+    )
+
+
+# Deduplicate UNKNOWN data and remove the old duplicate.
+unknown_training = list({
+    normalize(phrase): phrase
+    for phrase in unknown_training
+}.values())
+
+unknown_test = list({
+    normalize(phrase): phrase
+    for phrase in unknown_test
+}.values())
+
+unknown_train_keys = {
+    normalize(phrase) for phrase in unknown_training
+}
+
+unknown_test_keys = {
+    normalize(phrase) for phrase in unknown_test
+}
+
+unknown_overlap = unknown_train_keys & unknown_test_keys
+
+if unknown_overlap:
+    raise ValueError(
+        "UNKNOWN training/test overlap: "
+        + ", ".join(sorted(unknown_overlap))
+    )
 
 
 classes = REQUIRED_CLASSES + [UNKNOWN_CLASS]
+
 class_to_id = {
     name: index for index, name in enumerate(classes)
 }
@@ -349,11 +637,26 @@ for phrase in unknown_training:
     train_labels.append(class_to_id[UNKNOWN_CLASS])
 
 
-# The vocabulary is built only from training phrases.
+# Split raw phrases BEFORE vocabulary construction.
+# This prevents validation-only words from entering the vocabulary.
+
+y = np.asarray(train_labels, dtype=np.int32)
+
+all_indices = np.arange(len(train_texts))
+
+train_indices, val_indices = train_test_split(
+    all_indices,
+    test_size=0.20,
+    random_state=SEED,
+    stratify=y
+)
+
+
+# Build vocabulary using training phrases ONLY.
 vocabulary = sorted({
     word
-    for phrase in train_texts
-    for word in tokenize(phrase)
+    for index in train_indices
+    for word in tokenize(train_texts[index])
 })
 
 word_to_id = {
@@ -392,16 +695,11 @@ X = np.asarray(
     dtype=np.float32
 )
 
-y = np.asarray(train_labels, dtype=np.int32)
+X_train = X[train_indices]
+X_val = X[val_indices]
 
-
-X_train, X_val, y_train, y_val = train_test_split(
-    X,
-    y,
-    test_size=0.20,
-    random_state=SEED,
-    stratify=y
-)
+y_train = y[train_indices]
+y_val = y[val_indices]
 
 
 # ============================================================
@@ -445,14 +743,13 @@ callbacks = [
 
 
 print("\n====================================")
-print("AIEng4D INTENT MODEL V3")
+print("AIEng4D INTENT CLASSIFIER")
 print("====================================")
 print("Supported intents:", len(REQUIRED_CLASSES))
 print("Total classes including UNKNOWN:", len(classes))
-print("Training examples:", len(X))
+print("Training examples:", len(X_train))
+print("Validation examples:", len(X_val))
 print("Vocabulary size:", len(vocabulary))
-print("Training split:", len(X_train))
-print("Validation split:", len(X_val))
 
 model.summary()
 
@@ -470,11 +767,6 @@ history = model.fit(
 # ============================================================
 # 6. PARAMETER EXTRACTION
 # ============================================================
-
-# RGB colour aliases.
-# The actual RGB values are sent to the firmware as parameters.
-# Physical RGB LED wiring and common-anode/common-cathode behaviour
-# must be checked when implementing the hardware controller.
 
 RGB_COLOURS = {
     "red": {
@@ -581,35 +873,32 @@ def has_negation(text):
         r"\bno\b",
         r"\bdon't\b",
         r"\bdo not\b",
+        r"\bdoesn't\b",
         r"\bdoes not\b",
         r"\bshouldn't\b",
         r"\bshould not\b",
         r"\bcan't\b",
         r"\bcannot\b",
+        r"\bwon't\b",
+        r"\bwill not\b",
     ]
 
     lowered = text.lower()
 
-    return any(re.search(p, lowered) for p in patterns)
+    return any(
+        re.search(pattern, lowered)
+        for pattern in patterns
+    )
 
 
 def extract_motor_angle(text):
     """
-    Extract exactly one angle.
+    Extract exactly one integer angle.
 
-    Accepted examples:
-        move motor to 90 degrees
-        set motor angle to 45
-        move stepper to angle 120
-
-    Rejects:
-        move motor somewhere
-        move motor to 900 degrees
-        move motor to 90 and 180 degrees
+    Rejects missing, multiple, decimal and out-of-range angles.
     """
 
     lowered = text.lower()
-
     number_pattern = r"-?\d+(?:\.\d+)?"
 
     patterns = [
@@ -623,10 +912,7 @@ def extract_motor_angle(text):
 
     for pattern in patterns:
         for match in re.finditer(pattern, lowered):
-            try:
-                values.append(float(match.group(1)))
-            except ValueError:
-                pass
+            values.append(float(match.group(1)))
 
     unique_values = list(dict.fromkeys(values))
 
@@ -654,7 +940,6 @@ def extract_matrix_symbol(text):
         if contains_any(text, aliases):
             matches.append(canonical)
 
-    # Only accept exactly one recognized symbol.
     if len(matches) != 1:
         return None
 
@@ -729,10 +1014,13 @@ def parse_parameters(intent, text):
         ):
             return None
 
-        matches = find_matches(text, {
-            name: data["aliases"]
-            for name, data in RGB_COLOURS.items()
-        })
+        matches = find_matches(
+            text,
+            {
+                name: data["aliases"]
+                for name, data in RGB_COLOURS.items()
+            }
+        )
 
         if len(matches) != 1:
             return None
@@ -748,6 +1036,17 @@ def parse_parameters(intent, text):
         if not contains_any(
             lowered,
             ["motor", "stepper", "shaft"]
+        ):
+            return None
+
+        if contains_any(
+            lowered,
+            [
+                "clockwise", "clock wise",
+                "counterclockwise", "counter clockwise",
+                "anticlockwise", "anti clockwise",
+                "stop", "halt", "pause", "cancel"
+            ]
         ):
             return None
 
@@ -773,6 +1072,16 @@ def parse_parameters(intent, text):
         ):
             return None
 
+        if contains_any(
+            lowered,
+            [
+                "counterclockwise", "counter clockwise",
+                "anticlockwise", "anti clockwise",
+                "stop", "halt", "pause", "cancel"
+            ]
+        ):
+            return None
+
         return {
             "direction": "clockwise"
         }
@@ -787,11 +1096,15 @@ def parse_parameters(intent, text):
         if not contains_any(
             lowered,
             [
-                "counterclockwise",
-                "counter clockwise",
-                "anticlockwise",
-                "anti clockwise"
+                "counterclockwise", "counter clockwise",
+                "anticlockwise", "anti clockwise"
             ]
+        ):
+            return None
+
+        if contains_any(
+            lowered,
+            ["clockwise", "clock wise", "stop", "halt", "pause", "cancel"]
         ):
             return None
 
@@ -826,6 +1139,15 @@ def parse_parameters(intent, text):
         ):
             return None
 
+        if contains_any(
+            lowered,
+            [
+                "clear", "blank", "erase", "remove",
+                "reset", "wipe", "empty", "dark"
+            ]
+        ):
+            return None
+
         symbol = extract_matrix_symbol(text)
 
         if symbol is None:
@@ -840,6 +1162,9 @@ def parse_parameters(intent, text):
             lowered,
             ["matrix", "8x8", "8 by 8", "dot display", "led panel"]
         ):
+            return None
+
+        if extract_matrix_symbol(text) is not None:
             return None
 
         if not contains_any(
@@ -864,23 +1189,28 @@ def parse_parameters(intent, text):
 
 def classify_command(text):
     """
-    Full command pipeline.
-
     A command is accepted only if:
-      1. It is not empty.
-      2. It has adequate vocabulary coverage.
-      3. The classifier predicts a supported intent.
-      4. Confidence passes the initial threshold.
-      5. The top-two score margin passes the threshold.
-      6. Deterministic parameter extraction succeeds.
+      1. Input is not empty.
+      2. It is not negated.
+      3. Vocabulary coverage is adequate.
+      4. The predicted class is supported.
+      5. Confidence passes the threshold.
+      6. Top-two score margin passes the threshold.
+      7. Parameter extraction succeeds.
 
-    The classifier is never allowed to directly execute hardware.
+    The classifier never directly executes hardware.
     """
 
     if not isinstance(text, str) or not text.strip():
         return {
             "accepted": False,
             "reason": "Empty input"
+        }
+
+    if has_negation(text):
+        return {
+            "accepted": False,
+            "reason": "Negated command rejected"
         }
 
     coverage = token_coverage(text)
@@ -893,6 +1223,7 @@ def classify_command(text):
         }
 
     vector = encode_text(text).reshape(1, -1)
+
     scores = model.predict(vector, verbose=0)[0]
 
     order = np.argsort(scores)[::-1]
@@ -1040,6 +1371,12 @@ pipeline_tests = [
     ("Do not turn on the LED", None, False),
     ("Show something on the matrix", None, False),
     ("Show an unsupported symbol on the matrix", None, False),
+
+    ("Clear the matrix and show a heart", None, False),
+    ("Rotate the motor clockwise and counterclockwise", None, False),
+    ("Move the motor to 90 degrees clockwise", None, False),
+    ("Stop the motor and rotate clockwise", None, False),
+    ("Turn on the LED and turn it off", None, False),
 ]
 
 pipeline_lines = []
@@ -1081,60 +1418,165 @@ pipeline_accuracy = (
 
 
 # ============================================================
-# 10. TFLITE INT8 EXPORT
+# 10. TFLITE INT8 EXPORT AND EVALUATION
 # ============================================================
 
-model_path = OUTPUT_DIR / "intent_model_v3.keras"
-tflite_path = OUTPUT_DIR / "intent_model_v3_int8.tflite"
-
+model_path = OUTPUT_DIR / "intent_model.keras"
+tflite_path = OUTPUT_DIR / "intent_model_int8.tflite"
 
 model.save(model_path)
 
+quantization_status = "INT8 conversion not completed"
+
+tflite_accuracy = None
+tflite_agreement = None
+
+tflite_input_scale = None
+tflite_input_zero_point = None
+tflite_output_scale = None
+tflite_output_zero_point = None
+
+tflite_error = None
+
+# Remove an older model so a failed conversion cannot leave
+# a stale file that appears to be the newly generated model.
+
+if tflite_path.exists():
+    tflite_path.unlink()
+
 
 def representative_dataset():
-    # Use training examples from all classes.
-    # The exact input format is the same multi-hot vector used above.
+    rng = np.random.default_rng(SEED)
+
     sample_count = min(len(X_train), 300)
 
-    for index in range(sample_count):
-        yield [X_train[index:index + 1].astype(np.float32)]
+    selected = rng.choice(
+        len(X_train),
+        size=sample_count,
+        replace=False
+    )
 
+    for index in selected:
+        yield [
+            X_train[index:index + 1].astype(np.float32)
+        ]
 
-converter = tf.lite.TFLiteConverter.from_keras_model(model)
-
-converter.optimizations = [tf.lite.Optimize.DEFAULT]
-converter.representative_dataset = representative_dataset
-
-converter.target_spec.supported_ops = [
-    tf.lite.OpsSet.TFLITE_BUILTINS_INT8
-]
-
-converter.inference_input_type = tf.int8
-converter.inference_output_type = tf.int8
 
 try:
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+
+    converter.optimizations = [
+        tf.lite.Optimize.DEFAULT
+    ]
+
+    converter.representative_dataset = representative_dataset
+
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS_INT8
+    ]
+
+    converter.inference_input_type = tf.int8
+    converter.inference_output_type = tf.int8
+
     tflite_model = converter.convert()
 
     tflite_path.write_bytes(tflite_model)
 
-    quantization_status = "INT8 conversion successful"
-
-except Exception as error:
-    quantization_status = (
-        "INT8 conversion failed: " + str(error)
+    interpreter = tf.lite.Interpreter(
+        model_content=tflite_model
     )
 
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()[0]
+    output_details = interpreter.get_output_details()[0]
+
+    input_scale, input_zero_point = input_details["quantization"]
+    output_scale, output_zero_point = output_details["quantization"]
+
+    if input_scale <= 0 or output_scale <= 0:
+        raise ValueError("Invalid INT8 quantization parameters.")
+
+    tflite_input_scale = float(input_scale)
+    tflite_input_zero_point = int(input_zero_point)
+
+    tflite_output_scale = float(output_scale)
+    tflite_output_zero_point = int(output_zero_point)
+
+    quantized_predictions = []
+
+    for sample in X_test:
+        input_float = sample.reshape(1, -1)
+
+        input_quantized = np.round(
+            input_float / input_scale + input_zero_point
+        )
+
+        input_quantized = np.clip(
+            input_quantized,
+            -128,
+            127
+        ).astype(np.int8)
+
+        interpreter.set_tensor(
+            input_details["index"],
+            input_quantized
+        )
+
+        interpreter.invoke()
+
+        output_quantized = interpreter.get_tensor(
+            output_details["index"]
+        )
+
+        output_float = (
+            output_quantized.astype(np.float32)
+            - output_zero_point
+        ) * output_scale
+
+        predicted_class = int(
+            np.argmax(output_float[0])
+        )
+
+        quantized_predictions.append(predicted_class)
+
+    quantized_predictions = np.asarray(
+        quantized_predictions,
+        dtype=np.int32
+    )
+
+    tflite_accuracy = float(
+        np.mean(quantized_predictions == y_test)
+    )
+
+    tflite_agreement = float(
+        np.mean(quantized_predictions == test_predictions)
+    )
+
+    quantization_status = (
+        "INT8 conversion and held-out evaluation successful"
+    )
+
+except Exception as error:
+    tflite_error = str(error)
+
+    quantization_status = (
+        "INT8 conversion/evaluation failed: " + tflite_error
+    )
+
+    if tflite_path.exists():
+        tflite_path.unlink()
+
     print("\nWARNING:", quantization_status)
-    print("The Keras model has still been saved.")
 
 
 # ============================================================
 # 11. SAVE VOCABULARY, CLASSES AND METADATA
 # ============================================================
 
-vocabulary_path = OUTPUT_DIR / "vocabulary_v3.json"
-classes_path = OUTPUT_DIR / "classes_v3.json"
-metadata_path = OUTPUT_DIR / "metadata_v3.json"
+vocabulary_path = OUTPUT_DIR / "vocabulary.json"
+classes_path = OUTPUT_DIR / "classes.json"
+metadata_path = OUTPUT_DIR / "metadata.json"
 parser_path = OUTPUT_DIR / "command_parser_config.json"
 
 vocabulary_path.write_text(
@@ -1157,6 +1599,9 @@ parser_config = {
     "requires_valid_parameters": True,
     "negation_rejection": True,
     "multiple_parameter_rejection": True,
+    "minimum_confidence": MIN_CONFIDENCE,
+    "minimum_margin": MIN_MARGIN,
+    "minimum_token_coverage": MIN_TOKEN_COVERAGE,
 }
 
 parser_path.write_text(
@@ -1167,38 +1612,64 @@ parser_path.write_text(
 
 metadata = {
     "model_name": MODEL_NAME,
-    "version": 3,
+    "version": 2,
+
+    "dataset_description": (
+        "Self-contained reconstructed intent dataset. "
+        "The original external dataset file was unavailable."
+    ),
+
     "input_type": "binary_bag_of_words",
     "tokenizer_pattern": TOKEN_PATTERN,
     "input_size": len(vocabulary),
+
     "vocabulary_file": vocabulary_path.name,
+    "classes_file": classes_path.name,
     "classes": classes,
+
     "seed": SEED,
-    "training_examples": len(X),
+
+    "training_examples": len(X_train),
     "validation_examples": len(X_val),
     "held_out_test_examples": len(X_test),
+
     "classifier_test_accuracy": float(test_accuracy),
+
     "pipeline_test_count": len(pipeline_tests),
     "pipeline_tests_passed": pipeline_passed,
     "pipeline_test_accuracy": float(pipeline_accuracy),
-    "initial_rejection_thresholds": {
+
+    "rejection_thresholds": {
         "minimum_confidence": MIN_CONFIDENCE,
         "minimum_margin": MIN_MARGIN,
         "minimum_token_coverage": MIN_TOKEN_COVERAGE
     },
+
     "motor_range_placeholder": {
         "minimum_degrees": MOTOR_MIN_DEGREES,
         "maximum_degrees": MOTOR_MAX_DEGREES,
         "warning": (
-            "Verify the actual motor and mechanical range before "
-            "using this value in hardware firmware."
+            "Verify the actual motor, driver, gearing and "
+            "mechanical range before hardware deployment."
         )
     },
-    "quantization": quantization_status,
+
+    "quantization": {
+        "status": quantization_status,
+        "tflite_test_accuracy": tflite_accuracy,
+        "keras_tflite_prediction_agreement": tflite_agreement,
+        "input_scale": tflite_input_scale,
+        "input_zero_point": tflite_input_zero_point,
+        "output_scale": tflite_output_scale,
+        "output_zero_point": tflite_output_zero_point,
+        "error": tflite_error
+    },
+
     "deployment_warning": (
         "Reproduce the tokenizer, vocabulary ordering, multi-hot "
-        "encoding and quantization parameters exactly in ESP32 firmware. "
-        "Test the TFLite model on the target TFLM port."
+        "encoding, quantization and rejection rules exactly in ESP32 "
+        "firmware. Verify TFLM operator support and measure tensor "
+        "arena memory and inference latency on the ESP32-S3."
     )
 }
 
@@ -1212,17 +1683,20 @@ metadata_path.write_text(
 # 12. WRITE FULL EVALUATION REPORT
 # ============================================================
 
-results_path = RESULTS_DIR / "intent_v3_results.txt"
+results_path = RESULTS_DIR / "intent_results.txt"
 
 with results_path.open("w", encoding="utf-8") as file:
-    file.write("AIEng4D INTENT MODEL V3 RESULTS\n")
+    file.write("AIEng4D INTENT CLASSIFIER RESULTS\n")
     file.write("=" * 50 + "\n\n")
 
+    file.write("Dataset: reconstructed, self-contained dataset\n")
     file.write(f"Supported intents: {len(REQUIRED_CLASSES)}\n")
     file.write(f"Total classes: {len(classes)}\n")
-    file.write(f"Training examples: {len(X)}\n")
+    file.write(f"Training examples: {len(X_train)}\n")
+    file.write(f"Validation examples: {len(X_val)}\n")
     file.write(f"Vocabulary size: {len(vocabulary)}\n")
     file.write(f"Held-out examples: {len(X_test)}\n")
+
     file.write(
         f"Classifier test accuracy: {test_accuracy * 100:.2f}%\n"
     )
@@ -1254,8 +1728,24 @@ with results_path.open("w", encoding="utf-8") as file:
             f"INT8 TFLite: {tflite_path.stat().st_size:,} bytes\n"
         )
 
-    file.write("\n\nQUANTIZATION\n")
-    file.write(quantization_status)
+    file.write("\n\nINT8 EVALUATION\n")
+    file.write(quantization_status + "\n")
+
+    if tflite_accuracy is not None:
+        file.write(
+            f"INT8 held-out accuracy: "
+            f"{tflite_accuracy * 100:.2f}%\n"
+        )
+
+        file.write(
+            f"Keras/TFLite prediction agreement: "
+            f"{tflite_agreement * 100:.2f}%\n"
+        )
+
+        file.write(f"Input scale: {tflite_input_scale}\n")
+        file.write(f"Input zero point: {tflite_input_zero_point}\n")
+        file.write(f"Output scale: {tflite_output_scale}\n")
+        file.write(f"Output zero point: {tflite_output_zero_point}\n")
 
 
 # ============================================================
@@ -1267,11 +1757,25 @@ print("TRAINING COMPLETE")
 print("====================================")
 
 print(f"Classifier test accuracy: {test_accuracy * 100:.2f}%")
+
 print(
     f"Command pipeline tests: "
     f"{pipeline_passed}/{len(pipeline_tests)} "
     f"({pipeline_accuracy:.2f}%)"
 )
+
+if tflite_accuracy is not None:
+    print(
+        f"INT8 held-out accuracy: "
+        f"{tflite_accuracy * 100:.2f}%"
+    )
+
+    print(
+        f"Keras/TFLite agreement: "
+        f"{tflite_agreement * 100:.2f}%"
+    )
+else:
+    print("INT8 evaluation:", quantization_status)
 
 print("\nSaved files:")
 print("Keras model:", model_path)
@@ -1281,8 +1785,6 @@ print("Classes:", classes_path)
 print("Metadata:", metadata_path)
 print("Parser configuration:", parser_path)
 print("Evaluation:", results_path)
-
-print("\nQuantization:", quantization_status)
 
 print("\nIMPORTANT:")
 print("A passing software test does not prove safe hardware operation.")

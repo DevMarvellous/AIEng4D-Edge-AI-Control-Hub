@@ -7,5 +7,6 @@
   "MOTOR_MOVE",
   "MOTOR_CW",
   "MOTOR_CCW",
-  "MOTOR_STOP"
+  "MOTOR_STOP",
+  "UNKNOWN"
 ]
