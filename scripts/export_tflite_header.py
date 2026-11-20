@@ -1,34 +1,61 @@
+"""
+AIEng4D - Export trained TFLite models and intent configuration to C++ headers
 
+Run from the project root, after training and converting the models:
+    python scripts/export_tflite_header.py
+
+Writes:
+    firmware/handwriting_recognition/model_data.h
+    firmware/handwriting_recognition/handwriting_config.h
+    firmware/intent_control/intent_model_data.h
+    firmware/intent_control/intent_config.h
+
+intent_config.h holds everything the ESP32 needs besides the model bytes:
+the vocabulary, the class list, the INT8 quantization constants and the
+rejection thresholds. The quantization constants are read from the real
+.tflite file and checked against metadata.json, so a stale metadata file
+is caught here instead of on the device.
+
+The deterministic command parser (device checks, negation, relative-angle
+and direction rules) still has to be ported to firmware. See
+models/intent/command_parser_config.json for the rules.
+"""
+
+import json
 from pathlib import Path
+
 import tensorflow as tf
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+INTENT_DIR = PROJECT_ROOT / "models" / "intent"
+INTENT_FIRMWARE_DIR = PROJECT_ROOT / "firmware" / "intent_control"
+
 MODELS = [
     {
-        "name": "Handwriting (62 Classes)",
-        "model": Path(
-            "models/handwriting/handwriting_model_int8_62class.tflite"
-        ),
-        "output": Path(
-            "firmware/handwriting_recognition/model_data.h"
-        ),
+        "name": "Handwriting (62 classes)",
+        "model": PROJECT_ROOT / "models/handwriting/handwriting_model_int8_62class.tflite",
+        "output": PROJECT_ROOT / "firmware/handwriting_recognition/model_data.h",
         "array": "g_handwriting_model",
-        "expected_input": 1,
-        "expected_output": 62,
     },
     {
-        "name": "Intent (12 Classes)",
-        "model": Path(
-            "models/intent/intent_model_int8.tflite"
-        ),
-        "output": Path(
-            "firmware/intent_control/intent_model_data.h"
-        ),
+        "name": "Intent",
+        "model": INTENT_DIR / "intent_model_int8.tflite",
+        "output": INTENT_FIRMWARE_DIR / "intent_model_data.h",
         "array": "g_intent_model",
-        "expected_input": 309,
-        "expected_output": 12,
     },
 ]
+
+
+def read_quantization(model_path):
+    interpreter = tf.lite.Interpreter(model_path=str(model_path))
+    interpreter.allocate_tensors()
+
+    inp = interpreter.get_input_details()[0]
+    out = interpreter.get_output_details()[0]
+
+    return interpreter, inp, out
 
 
 def export_model(config):
@@ -39,38 +66,12 @@ def export_model(config):
     if not model.exists():
         raise FileNotFoundError(f"Model not found: {model}")
 
-    interpreter = tf.lite.Interpreter(model_path=str(model))
-    interpreter.allocate_tensors()
-
-    inp = interpreter.get_input_details()[0]
-    out = interpreter.get_output_details()[0]
-
-    input_size = int(inp["shape"][-1])
-    output_size = int(out["shape"][-1])
-
-    if input_size != config["expected_input"]:
-        raise ValueError(
-            f"{config['name']}: expected input size "
-            f"{config['expected_input']}, got {input_size}"
-        )
-
-    if output_size != config["expected_output"]:
-        raise ValueError(
-            f"{config['name']}: expected output size "
-            f"{config['expected_output']}, got {output_size}"
-        )
-
-    if inp["dtype"] != tf.int8 or out["dtype"] != tf.int8:
-        raise TypeError(
-            f"{config['name']}: expected INT8 input and output"
-        )
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     model_data = model.read_bytes()
 
     values = [
-        ", ".join(
-            f"0x{byte:02x}" for byte in model_data[i:i + 12]
-        )
+        ", ".join(f"0x{byte:02x}" for byte in model_data[i:i + 12])
         for i in range(0, len(model_data), 12)
     ]
 
@@ -85,15 +86,15 @@ const unsigned int {array_name}_len =
     sizeof({array_name});
 """
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(header)
+    output.write_text(header, encoding="utf-8")
 
-    print(f"\n{'=' * 50}")
-    print(config["name"].upper())
-    print(f"{'=' * 50}")
-    print("Source model:", model)
-    print("Exported header:", output)
-    print("Model size:", len(model_data), "bytes")
+    interpreter, inp, out = read_quantization(model)
+
+    print(f"\n{'=' * 45}")
+    print(f"{config['name'].upper()} MODEL")
+    print(f"{'=' * 45}")
+    print("Header:", output)
+    print("Model bytes:", len(model_data))
 
     print("\nINPUT")
     print("Shape:", inp["shape"])
@@ -110,11 +111,207 @@ const unsigned int {array_name}_len =
     for op in sorted(set(item["op_name"] for item in ops)):
         print("-", op)
 
-    print("\nExport completed successfully.")
+
+def export_handwriting_config():
+    """Class names and INT8 quantization for the 62-class handwriting model."""
+
+    folder = PROJECT_ROOT / "models" / "handwriting"
+    model_path = folder / "handwriting_model_int8_62class.tflite"
+    names_path = folder / "class_names.json"
+
+    for path in (model_path, names_path):
+        if not path.exists():
+            raise FileNotFoundError(f"Missing: {path}")
+
+    names = json.loads(names_path.read_text(encoding="utf-8"))
+
+    _, inp, out = read_quantization(model_path)
+
+    if out["shape"][-1] != len(names):
+        raise ValueError(
+            f"Handwriting model has {out['shape'][-1]} outputs but "
+            f"class_names.json has {len(names)} names."
+        )
+
+    if len(set(names)) != len(names):
+        raise ValueError("class_names.json contains duplicate names.")
+
+    in_scale, in_zero = inp["quantization"]
+    out_scale, out_zero = out["quantization"]
+
+    lines = [
+        "// Generated by scripts/export_tflite_header.py. Do not edit.",
+        "#pragma once",
+        "",
+        "// Input: 28x28x1 INT8 image, EMNIST orientation (transposed).",
+        f"constexpr int kHandwritingClassCount = {len(names)};",
+        f"constexpr float kHandwritingInputScale = {float(in_scale)!r}f;",
+        f"constexpr int kHandwritingInputZeroPoint = {int(in_zero)};",
+        f"constexpr float kHandwritingOutputScale = {float(out_scale)!r}f;",
+        f"constexpr int kHandwritingOutputZeroPoint = {int(out_zero)};",
+        "",
+        "// Output index -> character. Order: A-Z, a-z, 0-9.",
+        "static const char kHandwritingClasses"
+        "[kHandwritingClassCount] = {",
+    ]
+
+    for name in names:
+        if len(name) != 1:
+            raise ValueError(f"Class name must be one character: {name!r}")
+
+        char = name.replace("\\", "\\\\").replace("'", "\\'")
+        lines.append(f"    '{char}',")
+
+    lines.append("};")
+    lines.append("")
+
+    output = PROJECT_ROOT / "firmware/handwriting_recognition/handwriting_config.h"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines), encoding="utf-8")
+
+    print(f"\n{'=' * 45}")
+    print("HANDWRITING CONFIG")
+    print(f"{'=' * 45}")
+    print("Header:", output)
+    print("Classes:", len(names))
+
+
+def c_string(text):
+    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def export_intent_config():
+    metadata_path = INTENT_DIR / "metadata.json"
+    vocabulary_path = INTENT_DIR / "vocabulary.json"
+    classes_path = INTENT_DIR / "classes.json"
+    parser_path = INTENT_DIR / "command_parser_config.json"
+    model_path = INTENT_DIR / "intent_model_int8.tflite"
+
+    for path in (metadata_path, vocabulary_path, classes_path,
+                 parser_path, model_path):
+        if not path.exists():
+            raise FileNotFoundError(f"Missing: {path}")
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    vocabulary = json.loads(vocabulary_path.read_text(encoding="utf-8"))
+    classes = json.loads(classes_path.read_text(encoding="utf-8"))
+    parser = json.loads(parser_path.read_text(encoding="utf-8"))
+
+    # Read the quantization from the model that will actually be flashed.
+    _, inp, out = read_quantization(model_path)
+
+    in_scale, in_zero = inp["quantization"]
+    out_scale, out_zero = out["quantization"]
+
+    if inp["shape"][-1] != len(vocabulary):
+        raise ValueError(
+            f"Model input size {inp['shape'][-1]} does not match "
+            f"vocabulary size {len(vocabulary)}. The model and "
+            f"vocabulary.json are from different training runs."
+        )
+
+    if out["shape"][-1] != len(classes):
+        raise ValueError(
+            f"Model output size {out['shape'][-1]} does not match "
+            f"class count {len(classes)}."
+        )
+
+    saved = metadata.get("tflite_quantization_parameters") or {}
+
+    if saved:
+        same = (
+            abs(saved["input_scale"] - float(in_scale)) < 1e-9
+            and saved["input_zero_point"] == int(in_zero)
+            and abs(saved["output_scale"] - float(out_scale)) < 1e-9
+            and saved["output_zero_point"] == int(out_zero)
+        )
+
+        if not same:
+            raise ValueError(
+                "metadata.json quantization does not match the .tflite "
+                "file. Retrain and re-export from the same run."
+            )
+
+    thresholds = metadata["initial_rejection_thresholds"]
+    motor = metadata["motor_range_placeholder"]
+
+    lines = []
+    add = lines.append
+
+    add("// Generated by scripts/export_tflite_header.py. Do not edit.")
+    add("// Regenerate whenever the intent model is retrained.")
+    add("#pragma once")
+    add("#include <cstdint>")
+    add("")
+    add("// Tokenizer: lowercase, then split on [a-z0-9]+")
+    add("// Input: one float/int8 per vocabulary word, 1 if the word is")
+    add("// present in the text, otherwise 0 (multi-hot, order as below).")
+    add("")
+    add(f"constexpr int kIntentVocabularySize = {len(vocabulary)};")
+    add(f"constexpr int kIntentClassCount = {len(classes)};")
+    add(f'constexpr const char* kIntentUnknownClass = '
+        f'{c_string(metadata["unknown_class"])};')
+    add("")
+    add("// INT8 quantization of the model input and output.")
+    add(f"constexpr float kIntentInputScale = {float(in_scale)!r}f;")
+    add(f"constexpr int kIntentInputZeroPoint = {int(in_zero)};")
+    add(f"constexpr float kIntentOutputScale = {float(out_scale)!r}f;")
+    add(f"constexpr int kIntentOutputZeroPoint = {int(out_zero)};")
+    add("")
+    add("// Initial rejection thresholds. Starting values, not proven limits.")
+    add(f"constexpr float kIntentMinConfidence = "
+        f"{thresholds['minimum_confidence']!r}f;")
+    add(f"constexpr float kIntentMinMargin = "
+        f"{thresholds['minimum_margin']!r}f;")
+    add(f"constexpr float kIntentMinTokenCoverage = "
+        f"{thresholds['minimum_token_coverage']!r}f;")
+    add("")
+    add("// Placeholder motor range. Verify against the real mechanism.")
+    add(f"constexpr int kMotorMinDegrees = {motor['minimum_degrees']};")
+    add(f"constexpr int kMotorMaxDegrees = {motor['maximum_degrees']};")
+    add("")
+    add("static const char* const kIntentClasses[kIntentClassCount] = {")
+    for name in classes:
+        add(f"    {c_string(name)},")
+    add("};")
+    add("")
+    add("// RGB colour name -> {r, g, b}. Check wiring (common anode or")
+    add("// common cathode) before using these values.")
+    add("struct RgbColour { const char* name; uint8_t r, g, b; };")
+    add(f"constexpr int kRgbColourCount = {len(parser['rgb_colours'])};")
+    add("static const RgbColour kRgbColours[kRgbColourCount] = {")
+    for name, data in parser["rgb_colours"].items():
+        r, g, b = data["rgb"]
+        add(f"    {{{c_string(name)}, {r}, {g}, {b}}},")
+    add("};")
+    add("")
+    add("// Sorted alphabetically. This order defines the model input index.")
+    add("static const char* const kIntentVocabulary[kIntentVocabularySize] = {")
+    for word in vocabulary:
+        add(f"    {c_string(word)},")
+    add("};")
+    add("")
+
+    output = INTENT_FIRMWARE_DIR / "intent_config.h"
+    INTENT_FIRMWARE_DIR.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines), encoding="utf-8")
+
+    print(f"\n{'=' * 45}")
+    print("INTENT CONFIG")
+    print(f"{'=' * 45}")
+    print("Header:", output)
+    print("Vocabulary words:", len(vocabulary))
+    print("Classes:", len(classes))
+    print("Input scale/zero:", float(in_scale), int(in_zero))
+    print("Output scale/zero:", float(out_scale), int(out_zero))
 
 
 if __name__ == "__main__":
     for model_config in MODELS:
         export_model(model_config)
 
-    print("\nBoth firmware model headers exported successfully.")
+    export_handwriting_config()
+    export_intent_config()
+
+    print("\nAll headers exported successfully.")

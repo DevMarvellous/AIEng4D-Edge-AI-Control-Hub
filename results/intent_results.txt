@@ -1,112 +1,455 @@
-AIEng4D INTENT CLASSIFIER RESULTS
+AIEng4D INTENT MODEL RESULTS
 ==================================================
 
-Dataset: reconstructed, self-contained dataset
 Supported intents: 11
 Total classes: 12
-Training examples: 266
-Validation examples: 67
-Vocabulary size: 309
-Held-out examples: 84
-Classifier test accuracy: 96.43%
+Training examples: 844
+Validation examples: 169
+Vocabulary size: 539
+Held-out examples: 216
+Network: 539 -> 24 -> 12 -> 12
+Validation accuracy: 98.22%
+Classifier test accuracy: 97.22%
 
-CLASSIFICATION REPORT
+CLASSIFICATION REPORT (raw network, held-out)
               precision    recall  f1-score   support
 
-      LED_ON       1.00      0.80      0.89         5
-     LED_OFF       0.71      1.00      0.83         5
-     RGB_SET       1.00      1.00      1.00         5
- MATRIX_SHOW       1.00      1.00      1.00         5
-MATRIX_CLEAR       1.00      0.80      0.89         5
-  MOTOR_MOVE       1.00      1.00      1.00         5
-    MOTOR_CW       1.00      1.00      1.00         4
-   MOTOR_CCW       1.00      1.00      1.00         4
-  MOTOR_STOP       1.00      1.00      1.00         5
- BUZZER_PLAY       0.89      1.00      0.94         8
- BUZZER_STOP       1.00      1.00      1.00         5
-     UNKNOWN       1.00      0.96      0.98        28
+      LED_ON       1.00      1.00      1.00        14
+     LED_OFF       1.00      1.00      1.00        14
+     RGB_SET       1.00      1.00      1.00        14
+ MATRIX_SHOW       1.00      0.93      0.96        14
+MATRIX_CLEAR       0.93      1.00      0.97        14
+  MOTOR_MOVE       1.00      0.93      0.96        14
+    MOTOR_CW       1.00      1.00      1.00        14
+   MOTOR_CCW       1.00      1.00      1.00        14
+  MOTOR_STOP       0.93      1.00      0.97        14
+ BUZZER_PLAY       0.92      1.00      0.96        12
+ BUZZER_STOP       0.82      0.90      0.86        10
+     UNKNOWN       0.98      0.96      0.97        68
 
-    accuracy                           0.96        84
-   macro avg       0.97      0.96      0.96        84
-weighted avg       0.97      0.96      0.97        84
+    accuracy                           0.97       216
+   macro avg       0.97      0.98      0.97       216
+weighted avg       0.97      0.97      0.97       216
 
-CONFUSION MATRIX
-[[ 4  1  0  0  0  0  0  0  0  0  0  0]
- [ 0  5  0  0  0  0  0  0  0  0  0  0]
- [ 0  0  5  0  0  0  0  0  0  0  0  0]
- [ 0  0  0  5  0  0  0  0  0  0  0  0]
- [ 0  1  0  0  4  0  0  0  0  0  0  0]
- [ 0  0  0  0  0  5  0  0  0  0  0  0]
- [ 0  0  0  0  0  0  4  0  0  0  0  0]
- [ 0  0  0  0  0  0  0  4  0  0  0  0]
- [ 0  0  0  0  0  0  0  0  5  0  0  0]
- [ 0  0  0  0  0  0  0  0  0  8  0  0]
- [ 0  0  0  0  0  0  0  0  0  0  5  0]
- [ 0  0  0  0  0  0  0  0  0  1  0 27]]
+CONFUSION MATRIX (rows=actual, columns=predicted)
+Order: LED_ON, LED_OFF, RGB_SET, MATRIX_SHOW, MATRIX_CLEAR, MOTOR_MOVE, MOTOR_CW, MOTOR_CCW, MOTOR_STOP, BUZZER_PLAY, BUZZER_STOP, UNKNOWN
+[[14  0  0  0  0  0  0  0  0  0  0  0]
+ [ 0 14  0  0  0  0  0  0  0  0  0  0]
+ [ 0  0 14  0  0  0  0  0  0  0  0  0]
+ [ 0  0  0 13  1  0  0  0  0  0  0  0]
+ [ 0  0  0  0 14  0  0  0  0  0  0  0]
+ [ 0  0  0  0  0 13  0  0  0  0  0  1]
+ [ 0  0  0  0  0  0 14  0  0  0  0  0]
+ [ 0  0  0  0  0  0  0 14  0  0  0  0]
+ [ 0  0  0  0  0  0  0  0 14  0  0  0]
+ [ 0  0  0  0  0  0  0  0  0 12  0  0]
+ [ 0  0  0  0  0  0  0  0  0  1  9  0]
+ [ 0  0  0  0  0  0  0  0  1  0  2 65]]
+
+HELD-OUT MISCLASSIFICATIONS (raw network)
+show a down arrow using the dot matrix                         | actual=MATRIX_SHOW  | predicted=MATRIX_CLEAR | confidence=67.14%
+target an angle of 195 degrees                                 | actual=MOTOR_MOVE   | predicted=UNKNOWN      | confidence=86.04%
+please mute the buzzer                                         | actual=BUZZER_STOP  | predicted=BUZZER_PLAY  | confidence=81.96%
+turn off the gas cooker                                        | actual=UNKNOWN      | predicted=BUZZER_STOP  | confidence=39.16%
+stop the stopwatch                                             | actual=UNKNOWN      | predicted=BUZZER_STOP  | confidence=38.63%
+cancel the subscription                                        | actual=UNKNOWN      | predicted=MOTOR_STOP   | confidence=44.76%
+
+END-TO-END HELD-OUT (classifier + all rejection rules)
+Supported commands accepted correctly: 141/148
+Supported commands rejected (safe, but annoying): 7/148
+Supported commands accepted as WRONG intent (dangerous): 0/148
+Unsupported text rejected correctly: 68/68
+Unsupported text FALSELY ACCEPTED (dangerous): 0/68
+
+End-to-end result per class:
+  LED_ON        14/14
+  LED_OFF       14/14
+  RGB_SET       14/14
+  MATRIX_SHOW   13/14
+  MATRIX_CLEAR  14/14
+  MOTOR_MOVE    12/14
+  MOTOR_CW      12/14
+  MOTOR_CCW     13/14
+  MOTOR_STOP    14/14
+  BUZZER_PLAY   12/12
+  BUZZER_STOP   9/10
+  UNKNOWN       68/68
+
+End-to-end problems:
+REJECTED_SUPPORTED     | show a down arrow using the dot matrix                     | expected=MATRIX_SHOW  | Confidence below threshold
+REJECTED_SUPPORTED     | target an angle of 195 degrees                             | expected=MOTOR_MOVE   | Classified as UNKNOWN
+REJECTED_SUPPORTED     | set the target position to 105 degrees                     | expected=MOTOR_MOVE   | Missing, invalid or ambiguous command parameters
+REJECTED_SUPPORTED     | activate clockwise movement                                | expected=MOTOR_CW     | Missing, invalid or ambiguous command parameters
+REJECTED_SUPPORTED     | start a clockwise spin                                     | expected=MOTOR_CW     | Confidence below threshold
+REJECTED_SUPPORTED     | activate counterclockwise movement                         | expected=MOTOR_CCW    | Missing, invalid or ambiguous command parameters
+REJECTED_SUPPORTED     | please mute the buzzer                                     | expected=BUZZER_STOP  | Missing, invalid or ambiguous command parameters
+
+PARSER COVERAGE (correct intent given, no classifier)
+  training  LED_ON        63/63
+  training  LED_OFF       63/63
+  training  RGB_SET       48/50
+  training  MATRIX_SHOW   46/52
+  training  MATRIX_CLEAR  56/56
+  training  MOTOR_MOVE    54/54
+  training  MOTOR_CW      41/46
+  training  MOTOR_CCW     47/52
+  training  MOTOR_STOP    73/73
+  training  BUZZER_PLAY   58/59
+  training  BUZZER_STOP   43/43
+  held-out  LED_ON        14/14
+  held-out  LED_OFF       14/14
+  held-out  RGB_SET       14/14
+  held-out  MATRIX_SHOW   14/14
+  held-out  MATRIX_CLEAR  14/14
+  held-out  MOTOR_MOVE    12/14
+  held-out  MOTOR_CW      13/14
+  held-out  MOTOR_CCW     13/14
+  held-out  MOTOR_STOP    14/14
+  held-out  BUZZER_PLAY   12/12
+  held-out  BUZZER_STOP   10/10
+
+Phrases the parser rejects even with the correct intent:
+training  | RGB_SET      | change the colour of the rgb module
+training  | RGB_SET      | set the colour on the rgb led
+training  | MATRIX_SHOW  | display an arrow on the matrix
+training  | MATRIX_SHOW  | show a symbol on the 8 by 8 matrix
+training  | MATRIX_SHOW  | draw a pattern on the 8 by 8 matrix
+training  | MATRIX_SHOW  | put an arrow on the led panel
+training  | MATRIX_SHOW  | display a simple animation on the matrix
+training  | MATRIX_SHOW  | show a face on the led matrix
+training  | MOTOR_CW     | begin clockwise movement
+training  | MOTOR_CW     | run clockwise mode
+training  | MOTOR_CW     | turn clockwise continuously
+training  | MOTOR_CW     | move in the clockwise direction
+training  | MOTOR_CW     | clockwise please
+training  | MOTOR_CCW    | begin counterclockwise movement
+training  | MOTOR_CCW    | run counterclockwise mode
+training  | MOTOR_CCW    | turn counterclockwise continuously
+training  | MOTOR_CCW    | move in the counterclockwise direction
+training  | MOTOR_CCW    | counterclockwise please
+training  | BUZZER_PLAY  | play the error beep
+held-out  | MOTOR_MOVE   | target an angle of 195 degrees
+held-out  | MOTOR_MOVE   | set the target position to 105 degrees
+held-out  | MOTOR_CW     | activate clockwise movement
+held-out  | MOTOR_CCW    | activate counterclockwise movement
 
 COMMAND PIPELINE TESTS
-PASS | Turn on the indicator LED                            | LED_ON
-PASS | Switch off the indicator LED                         | LED_OFF
-PASS | Set the RGB LED to purple                            | RGB_SET
-PASS | Set RGB to cyan                                      | RGB_SET
-PASS | Change the RGB module to orange                      | RGB_SET
-PASS | Move the stepper motor to 90 degrees                 | MOTOR_MOVE
-PASS | Set the motor angle to 180 degrees                   | MOTOR_MOVE
-PASS | Rotate the stepper clockwise                         | MOTOR_CW
-PASS | Rotate the motor counterclockwise                    | MOTOR_CCW
-PASS | Stop the stepper motor                               | MOTOR_STOP
-PASS | Display a heart on the LED matrix                    | MATRIX_SHOW
-PASS | Show the letter A on the matrix                      | MATRIX_SHOW
-PASS | Clear the LED matrix                                 | MATRIX_CLEAR
-PASS | Make a short beep                                    | BUZZER_PLAY
-PASS | Play two beeps                                       | BUZZER_PLAY
-PASS | Play the success sound                               | BUZZER_PLAY
-PASS | Play an error tone on the buzzer                     | BUZZER_PLAY
-PASS | Sound the alarm                                      | BUZZER_PLAY
-PASS | Activate the active buzzer                           | BUZZER_PLAY
-PASS | Stop the buzzer                                      | BUZZER_STOP
-PASS | Turn off the active buzzer                           | BUZZER_STOP
-PASS | Silence the alarm                                    | BUZZER_STOP
-FAIL | Stop the sound                                       | Confidence below threshold
-PASS | My name is Martel                                    | Classified as UNKNOWN
-PASS | Tell me a joke                                       | Classified as UNKNOWN
-PASS | Calculate five plus seven                            | Classified as UNKNOWN
-PASS | Turn on the television                               | Confidence below threshold
-PASS | Make it purple                                       | Confidence below threshold
-PASS | Set RGB to purple and orange                         | Missing, invalid or ambiguous command parameters
-PASS | Move the motor somewhere                             | Confidence below threshold
-PASS | Move the motor to 900 degrees                        | Missing, invalid or ambiguous command parameters
-PASS | Move the motor to 90 and 180 degrees                 | Missing, invalid or ambiguous command parameters
-PASS | Turn on the LED and turn it off                      | Confidence below threshold
-PASS | Do not turn on the LED                               | Negated command rejected
-PASS | Show something on the matrix                         | Missing, invalid or ambiguous command parameters
-PASS | Show an unsupported symbol on the matrix             | Missing, invalid or ambiguous command parameters
-PASS | Clear the matrix and show a heart                    | Confidence below threshold
-PASS | Rotate the motor clockwise and counterclockwise      | Missing, invalid or ambiguous command parameters
-PASS | Move the motor to 90 degrees clockwise               | Missing, invalid or ambiguous command parameters
-PASS | Stop the motor and rotate clockwise                  | Missing, invalid or ambiguous command parameters
-PASS | Play a sound                                         | Missing, invalid or ambiguous command parameters
-PASS | Play a beep and an alarm                             | Missing, invalid or ambiguous command parameters
-PASS | Stop the buzzer and play a success sound             | Missing, invalid or ambiguous command parameters
-PASS | Do not beep                                          | Negated command rejected
-PASS | Turn on the active buzzer and stop it                | Missing, invalid or ambiguous command parameters
-PASS | Activate the buzzer                                  | Confidence below threshold
+PASS | 'Please turn the status LED on'                            | LED_ON {}
+PASS | 'TURN ON THE STATUS LED!!!'                                | LED_ON {}
+PASS | 'Shut off the board LED'                                   | LED_OFF {}
+PASS | 'Set the RGB LED to purple'                                | RGB_SET {'colour': 'purple', 'rgb': [128, 0, 255]}
+PASS | 'Make the RGB light cyan'                                  | RGB_SET {'colour': 'cyan', 'rgb': [0, 255, 255]}
+PASS | 'Change the RGB module to orange'                          | RGB_SET {'colour': 'orange', 'rgb': [255, 128, 0]}
+PASS | 'Move the stepper motor to 75 degrees'                     | MOTOR_MOVE {'angle_degrees': 75}
+PASS | 'Bring the motor shaft to 225 degrees'                     | MOTOR_MOVE {'angle_degrees': 225}
+PASS | 'Rotate the stepper clockwise'                             | MOTOR_CW {'direction': 'clockwise'}
+PASS | 'Rotate the motor counterclockwise'                        | MOTOR_CCW {'direction': 'counterclockwise'}
+PASS | 'Halt the stepper motor right now'                         | MOTOR_STOP {'action': 'stop'}
+PASS | 'Please do not move the motor'                             | MOTOR_STOP {'action': 'stop'}
+PASS | 'Show a star on the LED matrix'                            | MATRIX_SHOW {'symbol': 'star'}
+PASS | 'Show the letter A on the matrix'                          | MATRIX_SHOW {'symbol': 'letter_a'}
+PASS | 'Wipe the LED matrix'                                      | MATRIX_CLEAR {'action': 'clear'}
+PASS | 'Switch off the LED matrix'                                | MATRIX_CLEAR {'action': 'clear'}
+PASS | 'Make the shaft rotate counter clockwise'                  | MOTOR_CCW {'direction': 'counterclockwise'}
+PASS | 'Spin the stepper anticlockwise'                           | MOTOR_CCW {'direction': 'counterclockwise'}
+PASS | 'Turn the shaft anti clockwise'                            | MOTOR_CCW {'direction': 'counterclockwise'}
+PASS | 'Turn the motor clockwise and counterclockwise'            | Missing, invalid or ambiguous command parameters
+PASS | 'Please make a quick beep'                                 | BUZZER_PLAY {'device': 'passive', 'pattern': 'SHORT_BEEP'}
+PASS | 'Play a double beep for me'                                | BUZZER_PLAY {'device': 'passive', 'pattern': 'DOUBLE_BEEP'}
+PASS | 'Could you play the success tone'                          | BUZZER_PLAY {'device': 'passive', 'pattern': 'SUCCESS'}
+PASS | 'Sound the alarm now'                                      | BUZZER_PLAY {'device': 'passive', 'pattern': 'ALARM'}
+PASS | 'Switch on the continuous buzzer'                          | BUZZER_PLAY {'device': 'active', 'pattern': 'ACTIVE_ALERT_ON'}
+PASS | 'Please silence the buzzer'                                | BUZZER_STOP {'action': 'stop_all'}
+PASS | 'Stop the beeping now'                                     | BUZZER_STOP {'action': 'stop_all'}
+PASS | 'Switch off the alarm sound'                               | BUZZER_STOP {'action': 'stop_all'}
+PASS | 'Play a sound'                                             | Missing, invalid or ambiguous command parameters
+PASS | 'Play a beep and an alarm'                                 | Missing, invalid or ambiguous command parameters
+PASS | 'Stop the buzzer and play a success sound'                 | Missing, invalid or ambiguous command parameters
+PASS | 'Do not beep'                                              | Confidence below threshold
+PASS | 'Turn on the active buzzer and stop it'                    | Missing, invalid or ambiguous command parameters
+PASS | 'Activate the buzzer'                                      | Missing, invalid or ambiguous command parameters
+PASS | 'Set an alarm for seven'                                   | Classified as UNKNOWN
+PASS | 'Play my favourite song'                                   | Classified as UNKNOWN
+PASS | 'Is the buzzer sounding'                                   | Classified as UNKNOWN
+PASS | 'Are the indicator lights lit'                             | Classified as UNKNOWN
+PASS | 'Make the motor beep'                                      | Confidence below threshold
+PASS | 'Turn on the LED and sound the alarm'                      | Missing, invalid or ambiguous command parameters
+PASS | 'Stop the radio'                                           | Classified as UNKNOWN
+PASS | 'Begin a counterclockwise spin'                            | MOTOR_CCW {'direction': 'counterclockwise'}
+PASS | 'Please stop all the rotation'                             | MOTOR_STOP {'action': 'stop'}
+PASS | 'Spin the fan clockwise'                                   | Classified as UNKNOWN
+PASS | 'Rotate the picture clockwise'                             | Missing, invalid or ambiguous command parameters
+PASS | 'Rotate the photo anticlockwise'                           | Missing, invalid or ambiguous command parameters
+PASS | 'Stop the fan motor'                                       | Confidence below threshold
+PASS | 'Spin the servo clockwise'                                 | Missing, invalid or ambiguous command parameters
+PASS | 'Stop the rotation of the earth'                           | Missing, invalid or ambiguous command parameters
+PASS | 'Move the servo motor to 90 degrees'                       | Missing, invalid or ambiguous command parameters
+PASS | 'Turn off the RGB LED'                                     | Confidence below threshold
+PASS | 'Turn the RGB LED off'                                     | Confidence below threshold
+PASS | 'Switch on the LED matrix'                                 | Missing, invalid or ambiguous command parameters
+PASS | 'Set the LED to red'                                       | Confidence below threshold
+PASS | 'Rotate the motor 90 degrees clockwise'                    | Classified as UNKNOWN
+PASS | 'Rotate the stepper clockwise twice'                       | Missing, invalid or ambiguous command parameters
+PASS | 'Turn the motor a quarter turn counterclockwise'           | Missing, invalid or ambiguous command parameters
+PASS | 'Move the stepper by 90 degrees'                           | Missing, invalid or ambiguous command parameters
+PASS | 'Stop the motor and move it to 90 degrees'                 | Missing, invalid or ambiguous command parameters
+PASS | 'Move the motor somewhere'                                 | Missing, invalid or ambiguous command parameters
+PASS | 'Move the motor to 900 degrees'                            | Missing, invalid or ambiguous command parameters
+PASS | 'Move the motor to -30 degrees'                            | Missing, invalid or ambiguous command parameters
+PASS | 'Move the motor to 45.5 degrees'                           | Missing, invalid or ambiguous command parameters
+PASS | 'Move the motor to 90 and 180 degrees'                     | Missing, invalid or ambiguous command parameters
+PASS | 'Make it purple'                                           | Confidence below threshold
+PASS | 'Set RGB to purple and orange'                             | Missing, invalid or ambiguous command parameters
+PASS | 'Turn on the LED and turn it off'                          | Classified as UNKNOWN
+PASS | 'Do not turn on the LED'                                   | Missing, invalid or ambiguous command parameters
+PASS | 'Show something on the matrix'                             | Confidence below threshold
+PASS | 'Show an unsupported symbol on the matrix'                 | Missing, invalid or ambiguous command parameters
+PASS | 'Show a heart and a star on the matrix'                    | Missing, invalid or ambiguous command parameters
+PASS | 'Show a heart and clear the matrix'                        | Missing, invalid or ambiguous command parameters
+PASS | 'Is the indicator currently on'                            | Classified as UNKNOWN
+PASS | 'Why does my LED keep failing'                             | Classified as UNKNOWN
+PASS | 'What is the meaning of clockwise'                         | Classified as UNKNOWN
+PASS | 'Stop the playlist'                                        | Classified as UNKNOWN
+PASS | 'Turn the servo to 45 degrees'                             | Missing, invalid or ambiguous command parameters
+PASS | 'Turn off the air conditioner'                             | Classified as UNKNOWN
+PASS | 'I am called David'                                        | Classified as UNKNOWN
+PASS | 'Recite a nursery rhyme'                                   | Insufficient known vocabulary
+PASS | 'Calculate nine minus four'                                | Insufficient known vocabulary
+PASS | ''                                                         | Empty input
+PASS | '     '                                                    | Empty input
+PASS | 'asdf qwerty zxcv'                                         | Insufficient known vocabulary
 
 PIPELINE TEST SUMMARY
-Passed: 45/46
-Pipeline test score: 97.83%
+Passed: 84/84
+Pipeline test score: 100.00%
 
+TFLITE INT8 PARITY (held-out)
+INT8 classifier accuracy: 96.76%
+Agreement with Keras predictions: 99.54%
+Same accept/reject decision as Keras: 100.00%
+Quantization parameters: {'input_scale': 0.003921568859368563, 'input_zero_point': -128, 'output_scale': 0.00390625, 'output_zero_point': -128, 'input_shape': [1, 539], 'output_shape': [1, 12]}
 
 MODEL FILE SIZES
-Keras model: 120,424 bytes
-INT8 TFLite: 11,720 bytes
+Keras model: 186,664 bytes
+INT8 TFLite: 17,240 bytes
 
+QUANTIZATION
+INT8 conversion successful
 
-INT8 EVALUATION
-INT8 conversion and held-out evaluation successful
-INT8 held-out accuracy: 96.43%
-Keras/TFLite prediction agreement: 100.00%
-Input scale: 0.003921568859368563
-Input zero point: -128
-Output scale: 0.00390625
-Output zero point: -128
+INDIVIDUAL PREDICTIONS (raw network, held-out)
+please activate the status led                                 | actual=LED_ON       | predicted=LED_ON       | confidence=99.78%
+make the red indicator turn on                                 | actual=LED_ON       | predicted=LED_ON       | confidence=99.99%
+I need the green led illuminated                               | actual=LED_ON       | predicted=LED_ON       | confidence=99.31%
+enable the board indicator                                     | actual=LED_ON       | predicted=LED_ON       | confidence=99.50%
+switch the blue status led into the on state                   | actual=LED_ON       | predicted=LED_ON       | confidence=99.95%
+the indicator light needs to glow                              | actual=LED_ON       | predicted=LED_ON       | confidence=99.91%
+power up my led indicator                                      | actual=LED_ON       | predicted=LED_ON       | confidence=99.91%
+set the status indicator as on                                 | actual=LED_ON       | predicted=LED_ON       | confidence=99.97%
+turn my board led on please                                    | actual=LED_ON       | predicted=LED_ON       | confidence=99.97%
+make the indicator lamp shine                                  | actual=LED_ON       | predicted=LED_ON       | confidence=99.92%
+I would like the board indicator lit                           | actual=LED_ON       | predicted=LED_ON       | confidence=78.40%
+can you turn the led on                                        | actual=LED_ON       | predicted=LED_ON       | confidence=99.98%
+make sure the status led is on                                 | actual=LED_ON       | predicted=LED_ON       | confidence=99.98%
+switch the indicator light on for me                           | actual=LED_ON       | predicted=LED_ON       | confidence=99.87%
+please deactivate the status led                               | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.93%
+make the red indicator turn off                                | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.98%
+I need the green led extinguished                              | actual=LED_OFF      | predicted=LED_OFF      | confidence=97.81%
+disable the board indicator                                    | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.89%
+switch the blue status led into the off state                  | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.99%
+the indicator light should go dark                             | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.57%
+power down my led indicator                                    | actual=LED_OFF      | predicted=LED_OFF      | confidence=97.95%
+set the status indicator as off                                | actual=LED_OFF      | predicted=LED_OFF      | confidence=100.00%
+turn my board led off please                                   | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.50%
+make the indicator lamp stop shining                           | actual=LED_OFF      | predicted=LED_OFF      | confidence=98.33%
+I would like the board indicator off                           | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.95%
+can you turn the led off                                       | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.93%
+make sure the status led is off                                | actual=LED_OFF      | predicted=LED_OFF      | confidence=99.99%
+switch the indicator light off for me                          | actual=LED_OFF      | predicted=LED_OFF      | confidence=88.33%
+choose cyan on the rgb module                                  | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.96%
+make the rgb output orange                                     | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.69%
+I want the rgb led to display violet                           | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.99%
+select white for the rgb light                                 | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.96%
+change my rgb module to magenta                                | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.97%
+set the rgb colour as green                                    | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.98%
+display pink using the rgb led                                 | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.72%
+make the rgb indicator yellow                                  | actual=RGB_SET      | predicted=RGB_SET      | confidence=94.30%
+choose blue as the rgb colour                                  | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.95%
+change the rgb output to purple                                | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.99%
+can you make the rgb led red                                   | actual=RGB_SET      | predicted=RGB_SET      | confidence=85.81%
+switch the rgb light to blue                                   | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.82%
+I need the rgb module to show orange                           | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.99%
+turn the rgb output white                                      | actual=RGB_SET      | predicted=RGB_SET      | confidence=99.95%
+put a question mark on the 8x8 panel                           | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.97%
+draw the letter C on the matrix                                | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.69%
+display a number 7 on the led matrix                           | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.99%
+show a down arrow using the dot matrix                         | actual=MATRIX_SHOW  | predicted=MATRIX_CLEAR | confidence=67.14%
+render a smile on the 8x8 led display                          | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=97.39%
+put a star symbol on the dot panel                             | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.96%
+show a cross symbol using the led matrix                       | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.62%
+display a happy face on the 8x8 panel                          | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.84%
+draw a heart symbol on the led display                         | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.98%
+show the letter Z on the matrix                                | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.67%
+show a smiley face on the dot matrix                           | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.96%
+put the number 8 on the 8x8 display                            | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.81%
+display an up arrow on the led display                         | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=96.42%
+draw a tick on the matrix                                      | actual=MATRIX_SHOW  | predicted=MATRIX_SHOW  | confidence=99.95%
+remove the picture from the dot matrix                         | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=100.00%
+make every matrix pixel turn dark                              | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.92%
+erase the content on the 8x8 panel                             | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=88.48%
+reset the led dot display                                      | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=98.79%
+get rid of the symbol on the matrix                            | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=86.39%
+leave the led matrix completely blank                          | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.96%
+wipe the image from the dot panel                              | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.99%
+switch every pixel on the matrix off                           | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=79.51%
+empty the 8x8 led display                                      | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=98.07%
+remove the current drawing from the matrix                     | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.97%
+turn off the matrix completely                                 | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.86%
+clear the dot matrix screen                                    | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=100.00%
+take everything off the led panel                              | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=96.76%
+reset the 8x8 display to blank                                 | actual=MATRIX_CLEAR | predicted=MATRIX_CLEAR | confidence=99.98%
+place the motor at 105 degrees                                 | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.79%
+target an angle of 195 degrees                                 | actual=MOTOR_MOVE   | predicted=UNKNOWN      | confidence=86.04%
+set the shaft position to 330 degrees                          | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.79%
+move the stepper to 15 degrees                                 | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.79%
+rotate the motor until it reaches 255 degrees                  | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=96.27%
+position the motor at 165 degrees                              | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.95%
+set the stepper angle to 285 degrees                           | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.94%
+move the shaft to 210 degrees                                  | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.97%
+take the motor to 345 degrees                                  | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.83%
+set the target position to 105 degrees                         | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=96.63%
+move the stepper shaft to 150 degrees                          | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.98%
+send the motor to 60 degrees                                   | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.99%
+turn the stepper to angle 90                                   | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=99.74%
+set the motor to 300 degrees                                   | actual=MOTOR_MOVE   | predicted=MOTOR_MOVE   | confidence=97.20%
+begin turning the stepper clockwise                            | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.97%
+drive the shaft in a clockwise direction                       | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.99%
+keep spinning in the clockwise direction                       | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.99%
+activate clockwise movement                                    | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=98.64%
+make the motor rotate to the clockwise side                    | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=97.34%
+start a clockwise spin                                         | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=69.98%
+the stepper should rotate clockwise                            | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.81%
+continue the clockwise motor motion                            | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.61%
+engage clockwise rotation on the shaft                         | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.89%
+run the stepper in clockwise mode                              | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.97%
+can you spin the stepper clockwise                             | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.71%
+make the shaft go clockwise                                    | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=95.73%
+turn the motor clockwise please                                | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.68%
+keep the motor going clockwise                                 | actual=MOTOR_CW     | predicted=MOTOR_CW     | confidence=99.83%
+begin turning the stepper counterclockwise                     | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.93%
+drive the shaft in a counterclockwise direction                | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.95%
+keep spinning in the counterclockwise direction                | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.93%
+activate counterclockwise movement                             | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=98.69%
+make the motor rotate to the counterclockwise side             | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.99%
+start a counterclockwise spin                                  | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=97.31%
+the stepper should rotate counterclockwise                     | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=100.00%
+continue the counterclockwise motor motion                     | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.98%
+engage counterclockwise rotation on the shaft                  | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.96%
+run the stepper in counterclockwise mode                       | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.92%
+can you spin the stepper counter clockwise                     | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.88%
+make the shaft go anticlockwise                                | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.95%
+turn the motor anti clockwise please                           | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.35%
+keep the motor going counterclockwise                          | actual=MOTOR_CCW    | predicted=MOTOR_CCW    | confidence=99.95%
+bring the stepper rotation to a halt                           | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=100.00%
+make the shaft stop turning                                    | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.95%
+end all movement from the motor                                | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=100.00%
+I need the stepper stationary                                  | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.82%
+stop the motor operation right away                            | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.96%
+cancel whatever the stepper is doing                           | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.91%
+halt the shaft movement immediately                            | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=100.00%
+make the motor remain still                                    | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.61%
+stop all rotation now                                          | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.20%
+cease the stepper operation                                    | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=98.34%
+please stop the motor                                          | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.99%
+make the stepper come to a stop                                | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=91.21%
+I want the shaft stationary                                    | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.83%
+abort the stepper movement                                     | actual=MOTOR_STOP   | predicted=MOTOR_STOP   | confidence=99.95%
+give me one quick beep                                         | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.94%
+sound a pair of beeps                                          | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=98.09%
+play the confirmation tone                                     | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.97%
+make the buzzer play an error signal                           | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=100.00%
+trigger a repeating warning sound                              | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.66%
+activate the steady active buzzer                              | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.99%
+make a continuous alert tone                                   | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.99%
+play a rising success signal                                   | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.98%
+sound two quick beeps please                                   | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.95%
+play the failure signal                                        | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.96%
+make the alarm sound                                           | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=99.07%
+start a steady alert on the buzzer                             | actual=BUZZER_PLAY  | predicted=BUZZER_PLAY  | confidence=100.00%
+quiet the buzzer now                                           | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.90%
+end the beeping                                                | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=98.89%
+deactivate the buzzer alert                                    | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.90%
+stop the warning sound                                         | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.50%
+switch the active alert off                                    | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.57%
+please mute the buzzer                                         | actual=BUZZER_STOP  | predicted=BUZZER_PLAY  | confidence=81.96%
+turn off the alarm sound                                       | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.36%
+can you stop the beeping                                       | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=98.11%
+shut off the buzzer alarm                                      | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.99%
+make the buzzer be quiet                                       | actual=BUZZER_STOP  | predicted=BUZZER_STOP  | confidence=99.61%
+i am called david                                              | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.95%
+my favourite subject is mathematics                            | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+explain photosynthesis                                         | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.98%
+write a short story about a robot                              | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.94%
+what is the capital of Ghana                                   | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+calculate the derivative of x squared                          | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.73%
+I need to charge my phone                                      | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+please open the browser                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=95.36%
+turn on the radio                                              | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=98.43%
+switch off the ceiling fan                                     | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+make the room brighter                                         | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.58%
+play a song for me                                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=97.61%
+send an email                                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.39%
+what is the latest news                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+I want to learn JavaScript                                     | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=97.87%
+how do I build a mobile application                            | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+explain the theory of relativity                               | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+what is the square root of 144                                 | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+tell me a joke about computers                                 | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+I am going to class                                            | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.98%
+can you help with my homework                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.99%
+what is the weather in Lagos                                   | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+how do I connect a keyboard                                    | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+show me a picture of a cat                                     | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.96%
+write a business plan                                          | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.99%
+what is the difference between AI and ML                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+help me prepare for an examination                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.99%
+turn on the bedroom light                                      | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=61.82%
+increase the television volume                                 | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+what is the meaning of success                                 | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+turn off the gas cooker                                        | actual=UNKNOWN      | predicted=BUZZER_STOP  | confidence=39.16%
+switch on the standing fan                                     | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+turn on the water heater                                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.97%
+switch off the television please                               | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=33.39%
+turn off the car engine                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.99%
+move the robot forward                                         | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=97.75%
+rotate the camera to the left                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+make the speaker louder                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.99%
+show the temperature on the screen                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.96%
+read the humidity sensor                                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.96%
+is the matrix finished                                         | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=59.78%
+what does rgb stand for                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.82%
+how does a stepper motor spin                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=83.22%
+what is counterclockwise                                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=96.24%
+paint the fence green                                          | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=82.75%
+I like the colour orange                                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.73%
+stop the car                                                   | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=96.89%
+stop the stopwatch                                             | actual=UNKNOWN      | predicted=BUZZER_STOP  | confidence=38.63%
+cancel the subscription                                        | actual=UNKNOWN      | predicted=MOTOR_STOP   | confidence=44.76%
+clear the whiteboard                                           | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=98.86%
+erase my history                                               | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.92%
+reset the router                                               | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=87.70%
+set the thermostat to twenty five degrees                      | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.98%
+turn the photo ninety degrees                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.19%
+I need a new phone                                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.97%
+who won the match yesterday                                    | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=98.85%
+how far is Abuja from Lagos                                    | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+describe the water cycle                                       | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.98%
+give me a recipe for jollof rice                               | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=94.13%
+what is a resistor                                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+how loud is a buzzer                                           | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+turn the volume down                                           | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=94.53%
+mute my microphone                                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.97%
+stop the ringing of my phone                                   | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=100.00%
+play the news                                                  | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=57.82%
+make a sound like a cat                                        | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=96.44%
+set the alarm for tomorrow morning                             | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=99.85%
+play the next episode                                          | actual=UNKNOWN      | predicted=UNKNOWN      | confidence=89.93%

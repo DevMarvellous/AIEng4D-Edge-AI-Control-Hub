@@ -103,6 +103,132 @@
       ]
     }
   },
+  "buzzer_patterns": {
+    "SHORT_BEEP": {
+      "aliases": [
+        "beep",
+        "short beep",
+        "single beep",
+        "one beep",
+        "short tone",
+        "single tone",
+        "quick beep"
+      ],
+      "device": "passive",
+      "description": "One short tone"
+    },
+    "DOUBLE_BEEP": {
+      "aliases": [
+        "double beep",
+        "two beeps",
+        "two short beeps",
+        "double tone",
+        "pair of beeps",
+        "two quick beeps"
+      ],
+      "device": "passive",
+      "description": "Two short tones"
+    },
+    "SUCCESS": {
+      "aliases": [
+        "success",
+        "success sound",
+        "success tone",
+        "confirmation sound",
+        "confirmation tone",
+        "success signal",
+        "ascending tone",
+        "rising success signal"
+      ],
+      "device": "passive",
+      "description": "Three ascending tones"
+    },
+    "ERROR": {
+      "aliases": [
+        "error",
+        "error sound",
+        "error tone",
+        "error signal",
+        "failure sound",
+        "failure signal",
+        "failure tone",
+        "low error beep"
+      ],
+      "device": "passive",
+      "description": "Two low tones"
+    },
+    "ALARM": {
+      "aliases": [
+        "alarm",
+        "alarm sound",
+        "alarm pattern",
+        "warning alarm",
+        "warning sound",
+        "repeating warning sound"
+      ],
+      "device": "passive",
+      "description": "Repeating alternating tones"
+    },
+    "ACTIVE_ALERT_ON": {
+      "aliases": [
+        "active buzzer",
+        "continuous alert",
+        "continuous buzzer",
+        "steady alert",
+        "active alert",
+        "steady active buzzer",
+        "continuous buzzer alert"
+      ],
+      "device": "active",
+      "description": "Continuous active-buzzer alert"
+    }
+  },
+  "buzzer_stop_action": {
+    "action": "stop_all",
+    "description": "Stop both passive and active buzzers"
+  },
+  "unsupported_sound_things": [
+    "music",
+    "song",
+    "songs",
+    "playlist",
+    "radio",
+    "speaker",
+    "speakers",
+    "video",
+    "podcast",
+    "voice",
+    "phone",
+    "television",
+    "tv",
+    "microphone",
+    "game",
+    "clock",
+    "timer",
+    "stopwatch",
+    "horn",
+    "ringtone",
+    "news",
+    "episode"
+  ],
+  "question_words": [
+    "is",
+    "are",
+    "was",
+    "were",
+    "why",
+    "what",
+    "whats",
+    "how",
+    "when",
+    "where",
+    "which",
+    "who",
+    "whose",
+    "whom",
+    "does",
+    "did"
+  ],
   "matrix_symbols": {
     "smiley": [
       "smiley",
@@ -161,107 +287,351 @@
       "letter z"
     ],
     "number_3": [
-      "number 3"
+      "number 3",
+      "number three"
     ],
     "number_5": [
-      "number 5"
+      "number 5",
+      "number five"
     ],
     "number_7": [
-      "number 7"
+      "number 7",
+      "number seven"
     ],
     "number_8": [
-      "number 8"
+      "number 8",
+      "number eight"
     ]
-  },
-  "buzzer_patterns": {
-    "SHORT_BEEP": {
-      "aliases": [
-        "beep",
-        "short beep",
-        "single beep",
-        "one beep",
-        "short tone",
-        "single tone",
-        "quick beep"
-      ],
-      "device": "passive",
-      "description": "One short tone"
-    },
-    "DOUBLE_BEEP": {
-      "aliases": [
-        "double beep",
-        "two beeps",
-        "two short beeps",
-        "double tone",
-        "pair of beeps",
-        "two quick beeps"
-      ],
-      "device": "passive",
-      "description": "Two short tones"
-    },
-    "SUCCESS": {
-      "aliases": [
-        "success",
-        "success sound",
-        "success tone",
-        "confirmation sound",
-        "confirmation tone",
-        "success signal",
-        "ascending tone",
-        "rising success signal"
-      ],
-      "device": "passive",
-      "description": "Three ascending tones"
-    },
-    "ERROR": {
-      "aliases": [
-        "error",
-        "error sound",
-        "error tone",
-        "failure sound",
-        "failure signal",
-        "low error beep"
-      ],
-      "device": "passive",
-      "description": "Two low tones"
-    },
-    "ALARM": {
-      "aliases": [
-        "alarm",
-        "alarm sound",
-        "alarm pattern",
-        "warning alarm",
-        "warning sound",
-        "repeating warning sound"
-      ],
-      "device": "passive",
-      "description": "Repeating alternating tones"
-    },
-    "ACTIVE_ALERT_ON": {
-      "aliases": [
-        "active buzzer",
-        "continuous alert",
-        "continuous buzzer",
-        "steady alert",
-        "active alert",
-        "steady active buzzer",
-        "continuous buzzer alert"
-      ],
-      "device": "active",
-      "description": "Continuous active-buzzer alert"
-    }
-  },
-  "buzzer_stop_action": {
-    "action": "stop_all",
-    "description": "Stop both passive and active buzzers"
   },
   "motor_min_degrees": 0,
   "motor_max_degrees": 360,
+  "led_words": [
+    "led",
+    "indicator",
+    "status light",
+    "board led",
+    "indicator light",
+    "status indicator"
+  ],
+  "motor_words": [
+    "motor",
+    "stepper",
+    "shaft"
+  ],
+  "rotation_words": [
+    "rotate",
+    "rotates",
+    "rotating",
+    "rotation",
+    "spin",
+    "spins",
+    "spinning"
+  ],
+  "motor_command_vocabulary": [
+    "a",
+    "abort",
+    "activate",
+    "activity",
+    "all",
+    "an",
+    "and",
+    "anti",
+    "anticlockwise",
+    "at",
+    "away",
+    "begin",
+    "bring",
+    "cancel",
+    "cease",
+    "clockwise",
+    "continue",
+    "continuously",
+    "counter",
+    "counterclockwise",
+    "current",
+    "direction",
+    "disable",
+    "do",
+    "doing",
+    "drive",
+    "emergency",
+    "end",
+    "for",
+    "freeze",
+    "from",
+    "go",
+    "halt",
+    "hold",
+    "i",
+    "immediately",
+    "in",
+    "is",
+    "its",
+    "keep",
+    "make",
+    "mode",
+    "motor",
+    "move",
+    "movement",
+    "moving",
+    "must",
+    "not",
+    "now",
+    "of",
+    "off",
+    "on",
+    "output",
+    "pause",
+    "please",
+    "position",
+    "rest",
+    "right",
+    "rotate",
+    "rotating",
+    "rotation",
+    "run",
+    "set",
+    "shaft",
+    "should",
+    "spin",
+    "spinning",
+    "standstill",
+    "start",
+    "stationary",
+    "stay",
+    "stepper",
+    "still",
+    "stop",
+    "stopped",
+    "switch",
+    "terminate",
+    "the",
+    "to",
+    "turn",
+    "turning",
+    "want",
+    "what"
+  ],
+  "unsupported_rotating_things": [
+    "servo",
+    "fan",
+    "wheel",
+    "wheels",
+    "robot",
+    "arm",
+    "camera",
+    "door",
+    "car",
+    "window",
+    "knob",
+    "dial",
+    "earth",
+    "planet",
+    "propeller",
+    "drill",
+    "engine",
+    "turbine",
+    "pump",
+    "conveyor",
+    "blade",
+    "blades"
+  ],
+  "matrix_words": [
+    "matrix",
+    "8x8",
+    "8 by 8",
+    "dot display",
+    "dot panel",
+    "led panel",
+    "led display",
+    "symbol display"
+  ],
+  "other_device_words": [
+    "rgb",
+    "matrix",
+    "8x8",
+    "8 by 8",
+    "panel",
+    "display",
+    "dot",
+    "screen",
+    "motor",
+    "stepper",
+    "shaft"
+  ],
+  "led_on_words": [
+    "on",
+    "turn on",
+    "switch on",
+    "activate",
+    "activated",
+    "enable",
+    "enabled",
+    "illuminate",
+    "illuminated",
+    "glow",
+    "glowing",
+    "shine",
+    "shining",
+    "light up",
+    "lit",
+    "power on",
+    "power up",
+    "come on",
+    "start",
+    "visible",
+    "light the"
+  ],
+  "led_off_words": [
+    "off",
+    "turn off",
+    "switch off",
+    "deactivate",
+    "deactivated",
+    "disable",
+    "disabled",
+    "extinguish",
+    "extinguished",
+    "dark",
+    "go dark",
+    "power down",
+    "shut down",
+    "shut off",
+    "stop glowing",
+    "stop shining",
+    "stop the led",
+    "stop the indicator",
+    "stop the status",
+    "from glowing",
+    "from shining",
+    "put out",
+    "kill"
+  ],
+  "led_on_contradictions": [
+    "off",
+    "switch off",
+    "turn off",
+    "deactivate",
+    "deactivated",
+    "disable",
+    "disabled",
+    "extinguish",
+    "extinguished",
+    "dark",
+    "power down",
+    "shut down",
+    "shut off"
+  ],
+  "led_off_contradictions": [
+    "turn on",
+    "switch on",
+    "activate",
+    "enable",
+    "glow",
+    "illuminate",
+    "light up",
+    "power on",
+    "come on"
+  ],
+  "clockwise_aliases": [
+    "clockwise",
+    "clock wise"
+  ],
+  "counterclockwise_aliases": [
+    "counterclockwise",
+    "counter clockwise",
+    "counter clock wise",
+    "anticlockwise",
+    "anti clockwise",
+    "anti clock wise"
+  ],
+  "motor_stop_words": [
+    "stop",
+    "stopped",
+    "stopping",
+    "halt",
+    "halted",
+    "pause",
+    "cancel",
+    "cease",
+    "stationary",
+    "still",
+    "off",
+    "abort",
+    "terminate",
+    "freeze",
+    "end",
+    "disable",
+    "rest",
+    "standstill"
+  ],
+  "motor_move_reject_words": [
+    "by",
+    "more",
+    "another",
+    "further",
+    "additional",
+    "extra",
+    "back",
+    "again",
+    "plus",
+    "minus",
+    "relative",
+    "stop",
+    "halt",
+    "pause",
+    "cancel",
+    "abort",
+    "freeze"
+  ],
+  "rotation_amount_words": [
+    "degree",
+    "degrees",
+    "deg",
+    "once",
+    "twice",
+    "thrice",
+    "times",
+    "revolution",
+    "revolutions",
+    "full",
+    "half",
+    "quarter",
+    "step",
+    "steps",
+    "turns",
+    "rotations"
+  ],
+  "matrix_clear_words": [
+    "clear",
+    "blank",
+    "erase",
+    "remove",
+    "reset",
+    "wipe",
+    "empty",
+    "dark",
+    "off",
+    "hide",
+    "delete",
+    "stop",
+    "get rid of",
+    "take everything off",
+    "clean"
+  ],
+  "matrix_draw_words": [
+    "show",
+    "display",
+    "draw",
+    "put",
+    "render",
+    "write"
+  ],
   "requires_explicit_device_context": true,
   "requires_valid_parameters": true,
   "negation_rejection": true,
+  "negated_motion_means_stop": true,
   "multiple_parameter_rejection": true,
-  "minimum_confidence": 0.75,
-  "minimum_margin": 0.15,
-  "minimum_token_coverage": 0.35
+  "relative_angle_rejection": true,
+  "direction_check_strips_counterclockwise_first": true
 }
