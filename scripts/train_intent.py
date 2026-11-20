@@ -1,11 +1,11 @@
 
 """
-AIEng4D - Intent Classification and Command Validation
+AIEng4D - Intent Classification and Command Validation V3
 
 Run from the project root:
     python scripts/train_intent.py
 
-This script is self-contained. It does not require an external dataset file.
+Self-contained reconstructed dataset. No external dataset required.
 
 Outputs:
     models/intent/intent_model.keras
@@ -21,6 +21,7 @@ Architecture:
 - Deterministic parsing extracts and validates parameters.
 - Unsupported, incomplete, negated and ambiguous commands are rejected.
 - This script does not control hardware.
+- Buzzer patterns are predefined firmware effects, not generated audio.
 """
 
 import json
@@ -79,11 +80,13 @@ REQUIRED_CLASSES = [
     "MOTOR_CW",
     "MOTOR_CCW",
     "MOTOR_STOP",
+    "BUZZER_PLAY",
+    "BUZZER_STOP",
 ]
 
 
 # Reconstructed training dataset.
-# These examples are not claimed to be the original missing dataset.
+# The original missing external dataset is not claimed to be used.
 
 training_data = {
 
@@ -293,6 +296,62 @@ training_data = {
         "motor stop",
         "halt the stepper",
     ],
+
+    "BUZZER_PLAY": [
+        "beep",
+        "make a short beep",
+        "play a short beep",
+        "make one beep",
+        "play a single beep",
+        "give me a short tone",
+        "make a double beep",
+        "play two beeps",
+        "sound two short beeps",
+        "play a double tone",
+        "play the success sound",
+        "make a success tone",
+        "play a confirmation sound",
+        "give me the success signal",
+        "play the error sound",
+        "make an error tone",
+        "play a failure sound",
+        "give me a low error beep",
+        "sound the alarm",
+        "play an alarm pattern",
+        "start the warning alarm",
+        "make the buzzer sound an alarm",
+        "activate the active buzzer",
+        "turn on the active buzzer",
+        "start the continuous buzzer alert",
+        "sound a steady alert",
+        "play a short tone on the buzzer",
+        "make two quick beeps",
+        "play an ascending tone",
+        "start the buzzer alarm",
+    ],
+
+    "BUZZER_STOP": [
+        "stop the buzzer",
+        "stop the sound",
+        "silence the buzzer",
+        "stop all buzzer sounds",
+        "turn off the active buzzer",
+        "deactivate the active buzzer",
+        "switch off the buzzer",
+        "stop the alarm",
+        "silence the alarm",
+        "stop the beeping",
+        "stop the continuous alert",
+        "turn the buzzer off",
+        "disable the buzzer",
+        "halt the buzzer sound",
+        "cancel the buzzer alert",
+        "make the buzzer quiet",
+        "stop the active alert",
+        "switch the buzzer off now",
+        "end the alarm sound",
+        "stop all sounds from the buzzer",
+    ],
 }
 
 
@@ -369,6 +428,25 @@ test_data = {
         "cancel the current motor operation",
         "bring the stepper to a halt",
         "stop the motor immediately",
+    ],
+
+    "BUZZER_PLAY": [
+        "give me one quick beep",
+        "sound a pair of beeps",
+        "play the confirmation tone",
+        "make the buzzer play an error signal",
+        "trigger a repeating warning sound",
+        "activate the steady active buzzer",
+        "make a continuous alert tone",
+        "play a rising success signal",
+    ],
+
+    "BUZZER_STOP": [
+        "quiet the buzzer now",
+        "end the beeping",
+        "deactivate the buzzer alert",
+        "stop the warning sound",
+        "switch the active alert off",
     ],
 }
 
@@ -560,9 +638,7 @@ for intent, phrases in training_data.items():
         key = normalize(phrase)
 
         if key in phrase_owner and phrase_owner[key] != intent:
-            raise ValueError(
-                f"Conflicting training phrase: {phrase!r}"
-            )
+            raise ValueError(f"Conflicting training phrase: {phrase!r}")
 
         phrase_owner[key] = intent
 
@@ -589,7 +665,7 @@ if supported_overlap:
     )
 
 
-# Deduplicate UNKNOWN data and remove the old duplicate.
+# Deduplicate UNKNOWN data and check for overlap.
 unknown_training = list({
     normalize(phrase): phrase
     for phrase in unknown_training
@@ -836,6 +912,93 @@ MATRIX_SYMBOLS = {
 }
 
 
+# Fixed patterns to be implemented in firmware.
+# The model does not generate arbitrary audio.
+BUZZER_PATTERNS = {
+    "SHORT_BEEP": {
+        "aliases": [
+            "beep",
+            "short beep",
+            "single beep",
+            "one beep",
+            "short tone",
+            "single tone",
+            "quick beep"
+        ],
+        "device": "passive",
+        "description": "One short tone"
+    },
+
+    "DOUBLE_BEEP": {
+        "aliases": [
+            "double beep",
+            "two beeps",
+            "two short beeps",
+            "double tone",
+            "pair of beeps",
+            "two quick beeps"
+        ],
+        "device": "passive",
+        "description": "Two short tones"
+    },
+
+    "SUCCESS": {
+        "aliases": [
+            "success",
+            "success sound",
+            "success tone",
+            "confirmation sound",
+            "confirmation tone",
+            "success signal",
+            "ascending tone",
+            "rising success signal"
+        ],
+        "device": "passive",
+        "description": "Three ascending tones"
+    },
+
+    "ERROR": {
+        "aliases": [
+            "error",
+            "error sound",
+            "error tone",
+            "failure sound",
+            "failure signal",
+            "low error beep"
+        ],
+        "device": "passive",
+        "description": "Two low tones"
+    },
+
+    "ALARM": {
+        "aliases": [
+            "alarm",
+            "alarm sound",
+            "alarm pattern",
+            "warning alarm",
+            "warning sound",
+            "repeating warning sound"
+        ],
+        "device": "passive",
+        "description": "Repeating alternating tones"
+    },
+
+    "ACTIVE_ALERT_ON": {
+        "aliases": [
+            "active buzzer",
+            "continuous alert",
+            "continuous buzzer",
+            "steady alert",
+            "active alert",
+            "steady active buzzer",
+            "continuous buzzer alert"
+        ],
+        "device": "active",
+        "description": "Continuous active-buzzer alert"
+    },
+}
+
+
 def contains_any(text, phrases):
     text = normalize(text)
 
@@ -867,23 +1030,24 @@ def find_matches(text, alias_map):
 
 
 def has_negation(text):
+    # Normalize first because apostrophes are removed by tokenize().
+    lowered = normalize(text)
+
     patterns = [
         r"\bnot\b",
         r"\bnever\b",
         r"\bno\b",
-        r"\bdon't\b",
+        r"\bdon t\b",
         r"\bdo not\b",
-        r"\bdoesn't\b",
+        r"\bdoesn t\b",
         r"\bdoes not\b",
-        r"\bshouldn't\b",
+        r"\bshouldn t\b",
         r"\bshould not\b",
-        r"\bcan't\b",
+        r"\bcan t\b",
         r"\bcannot\b",
-        r"\bwon't\b",
+        r"\bwon t\b",
         r"\bwill not\b",
     ]
-
-    lowered = text.lower()
 
     return any(
         re.search(pattern, lowered)
@@ -944,6 +1108,38 @@ def extract_matrix_symbol(text):
         return None
 
     return matches[0]
+
+
+def extract_buzzer_pattern(text):
+    """Return exactly one recognized buzzer pattern, preferring the most specific alias."""
+
+    lowered = normalize(text)
+    matches = []
+
+    for canonical, details in BUZZER_PATTERNS.items():
+        for alias in details["aliases"]:
+            normalized_alias = normalize(alias)
+
+            if contains_any(lowered, [normalized_alias]):
+                matches.append((canonical, len(normalized_alias.split())))
+
+    if not matches:
+        return None
+
+    # Prefer the longest matching alias.
+    longest_length = max(length for _, length in matches)
+
+    best_matches = {
+        canonical
+        for canonical, length in matches
+        if length == longest_length
+    }
+
+    # Reject if multiple patterns are equally specific.
+    if len(best_matches) != 1:
+        return None
+
+    return best_matches.pop()
 
 
 def parse_parameters(intent, text):
@@ -1180,7 +1376,72 @@ def parse_parameters(intent, text):
             "action": "clear"
         }
 
-    return None
+    if intent == "BUZZER_PLAY":
+        if not contains_any(
+            lowered,
+            [
+                "buzzer", "sound", "beep", "beeps",
+                "tone", "alarm", "alert", "signal"
+            ]
+        ):
+            return None
+
+        # A play request cannot also contain stop/off language.
+        if contains_any(
+            lowered,
+            [
+                "stop", "silence", "quiet", "off",
+                "deactivate", "disable", "halt", "cancel"
+            ]
+        ):
+            return None
+
+        pattern = extract_buzzer_pattern(text)
+
+        if pattern is None:
+            return None
+
+        details = BUZZER_PATTERNS[pattern]
+
+        return {
+            "device": details["device"],
+            "pattern": pattern
+        }
+
+    if intent == "BUZZER_STOP":
+        if not contains_any(
+            lowered,
+            [
+                "buzzer", "sound", "beep",
+                "tone", "alarm", "alert", "signal"
+            ]
+        ):
+            return None
+
+        if not contains_any(
+            lowered,
+            [
+                "stop", "silence", "quiet", "off",
+                "deactivate", "disable", "halt",
+                "cancel", "end"
+            ]
+        ):
+            return None
+
+        # Reject commands that also request a new sound.
+        if contains_any(
+            lowered,
+            [
+                "play", "start", "activate", "trigger",
+                "turn on", "switch on", "enable",
+                "begin", "produce", "give"
+            ]
+        ):
+            return None
+
+        return {
+            "action": "stop_all"
+        }
 
 
 # ============================================================
@@ -1357,6 +1618,18 @@ pipeline_tests = [
     ("Show the letter A on the matrix", "MATRIX_SHOW", True),
     ("Clear the LED matrix", "MATRIX_CLEAR", True),
 
+    ("Make a short beep", "BUZZER_PLAY", True),
+    ("Play two beeps", "BUZZER_PLAY", True),
+    ("Play the success sound", "BUZZER_PLAY", True),
+    ("Play an error tone on the buzzer", "BUZZER_PLAY", True),
+    ("Sound the alarm", "BUZZER_PLAY", True),
+    ("Activate the active buzzer", "BUZZER_PLAY", True),
+
+    ("Stop the buzzer", "BUZZER_STOP", True),
+    ("Turn off the active buzzer", "BUZZER_STOP", True),
+    ("Silence the alarm", "BUZZER_STOP", True),
+    ("Stop the sound", "BUZZER_STOP", True),
+
     ("My name is Martel", None, False),
     ("Tell me a joke", None, False),
     ("Calculate five plus seven", None, False),
@@ -1376,7 +1649,13 @@ pipeline_tests = [
     ("Rotate the motor clockwise and counterclockwise", None, False),
     ("Move the motor to 90 degrees clockwise", None, False),
     ("Stop the motor and rotate clockwise", None, False),
-    ("Turn on the LED and turn it off", None, False),
+
+    ("Play a sound", None, False),
+    ("Play a beep and an alarm", None, False),
+    ("Stop the buzzer and play a success sound", None, False),
+    ("Do not beep", None, False),
+    ("Turn on the active buzzer and stop it", None, False),
+    ("Activate the buzzer", None, False),
 ]
 
 pipeline_lines = []
@@ -1388,6 +1667,10 @@ print("====================================")
 
 for phrase, expected_intent, expected_accepted in pipeline_tests:
     result = classify_command(phrase)
+
+    if phrase in ["Play two beeps", "Stop the sound"]:
+        print("\nDEBUG:", phrase)
+        print(json.dumps(result, indent=2))
 
     actual_accepted = result["accepted"]
 
@@ -1405,7 +1688,7 @@ for phrase, expected_intent, expected_accepted in pipeline_tests:
     status = "PASS" if passed else "FAIL"
 
     line = (
-        f"{status:4s} | {phrase:48s} | "
+        f"{status:4s} | {phrase:52s} | "
         f"{result.get('intent', result.get('reason'))}"
     )
 
@@ -1593,12 +1876,22 @@ classes_path.write_text(
 parser_config = {
     "rgb_colours": RGB_COLOURS,
     "matrix_symbols": MATRIX_SYMBOLS,
+
+    "buzzer_patterns": BUZZER_PATTERNS,
+
+    "buzzer_stop_action": {
+        "action": "stop_all",
+        "description": "Stop both passive and active buzzers"
+    },
+
     "motor_min_degrees": MOTOR_MIN_DEGREES,
     "motor_max_degrees": MOTOR_MAX_DEGREES,
+
     "requires_explicit_device_context": True,
     "requires_valid_parameters": True,
     "negation_rejection": True,
     "multiple_parameter_rejection": True,
+
     "minimum_confidence": MIN_CONFIDENCE,
     "minimum_margin": MIN_MARGIN,
     "minimum_token_coverage": MIN_TOKEN_COVERAGE,
@@ -1612,11 +1905,12 @@ parser_path.write_text(
 
 metadata = {
     "model_name": MODEL_NAME,
-    "version": 2,
+    "version": 3,
 
     "dataset_description": (
         "Self-contained reconstructed intent dataset. "
-        "The original external dataset file was unavailable."
+        "The original external dataset file was unavailable. "
+        "Buzzer intents and test phrases were added in version 3."
     ),
 
     "input_type": "binary_bag_of_words",
@@ -1645,12 +1939,39 @@ metadata = {
         "minimum_token_coverage": MIN_TOKEN_COVERAGE
     },
 
+    "buzzer_design": {
+        "supported_intents": [
+            "BUZZER_PLAY",
+            "BUZZER_STOP"
+        ],
+
+        "patterns": list(BUZZER_PATTERNS.keys()),
+
+        "passive_buzzer_patterns": [
+            "SHORT_BEEP",
+            "DOUBLE_BEEP",
+            "SUCCESS",
+            "ERROR",
+            "ALARM"
+        ],
+
+        "active_buzzer_pattern": "ACTIVE_ALERT_ON",
+
+        "stop_action": "stop_all",
+
+        "implementation": (
+            "Firmware maps named patterns to fixed passive-buzzer "
+            "frequency and duration sequences, or active-buzzer "
+            "on/off control. No arbitrary audio generation."
+        )
+    },
+
     "motor_range_placeholder": {
         "minimum_degrees": MOTOR_MIN_DEGREES,
         "maximum_degrees": MOTOR_MAX_DEGREES,
         "warning": (
             "Verify the actual motor, driver, gearing and "
-            "mechanical range before hardware deployment."
+            "mechanical range before deployment."
         )
     },
 
@@ -1658,18 +1979,23 @@ metadata = {
         "status": quantization_status,
         "tflite_test_accuracy": tflite_accuracy,
         "keras_tflite_prediction_agreement": tflite_agreement,
+
         "input_scale": tflite_input_scale,
         "input_zero_point": tflite_input_zero_point,
+
         "output_scale": tflite_output_scale,
         "output_zero_point": tflite_output_zero_point,
+
         "error": tflite_error
     },
 
     "deployment_warning": (
         "Reproduce the tokenizer, vocabulary ordering, multi-hot "
         "encoding, quantization and rejection rules exactly in ESP32 "
-        "firmware. Verify TFLM operator support and measure tensor "
-        "arena memory and inference latency on the ESP32-S3."
+        "firmware. Map buzzer pattern names to fixed firmware sound "
+        "sequences. Verify TFLM operator support and measure tensor "
+        "arena memory and inference latency on the ESP32-S3. "
+        "Software tests do not prove physical hardware operation."
     )
 }
 
@@ -1789,4 +2115,5 @@ print("Evaluation:", results_path)
 print("\nIMPORTANT:")
 print("A passing software test does not prove safe hardware operation.")
 print("Verify the motor range, RGB wiring and matrix driver separately.")
+print("Map buzzer patterns to fixed firmware sequences.")
 print("Do not execute commands directly from neural-network output.")

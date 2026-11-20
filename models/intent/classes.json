@@ -8,5 +8,7 @@
   "MOTOR_CW",
   "MOTOR_CCW",
   "MOTOR_STOP",
+  "BUZZER_PLAY",
+  "BUZZER_STOP",
   "UNKNOWN"
 ]

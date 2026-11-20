@@ -1,10 +1,10 @@
 {
   "model_name": "AIEng4D Intent Classifier",
-  "version": 2,
-  "dataset_description": "Self-contained reconstructed intent dataset. The original external dataset file was unavailable.",
+  "version": 3,
+  "dataset_description": "Self-contained reconstructed intent dataset. The original external dataset file was unavailable. Buzzer intents and test phrases were added in version 3.",
   "input_type": "binary_bag_of_words",
   "tokenizer_pattern": "[a-z0-9]+",
-  "input_size": 288,
+  "input_size": 309,
   "vocabulary_file": "vocabulary.json",
   "classes_file": "classes.json",
   "classes": [
@@ -17,35 +17,61 @@
     "MOTOR_CW",
     "MOTOR_CCW",
     "MOTOR_STOP",
+    "BUZZER_PLAY",
+    "BUZZER_STOP",
     "UNKNOWN"
   ],
   "seed": 42,
-  "training_examples": 226,
-  "validation_examples": 57,
-  "held_out_test_examples": 71,
-  "classifier_test_accuracy": 0.98591548204422,
-  "pipeline_test_count": 31,
-  "pipeline_tests_passed": 31,
-  "pipeline_test_accuracy": 100.0,
+  "training_examples": 266,
+  "validation_examples": 67,
+  "held_out_test_examples": 84,
+  "classifier_test_accuracy": 0.9642857313156128,
+  "pipeline_test_count": 46,
+  "pipeline_tests_passed": 45,
+  "pipeline_test_accuracy": 97.82608695652173,
   "rejection_thresholds": {
     "minimum_confidence": 0.75,
     "minimum_margin": 0.15,
     "minimum_token_coverage": 0.35
   },
+  "buzzer_design": {
+    "supported_intents": [
+      "BUZZER_PLAY",
+      "BUZZER_STOP"
+    ],
+    "patterns": [
+      "SHORT_BEEP",
+      "DOUBLE_BEEP",
+      "SUCCESS",
+      "ERROR",
+      "ALARM",
+      "ACTIVE_ALERT_ON"
+    ],
+    "passive_buzzer_patterns": [
+      "SHORT_BEEP",
+      "DOUBLE_BEEP",
+      "SUCCESS",
+      "ERROR",
+      "ALARM"
+    ],
+    "active_buzzer_pattern": "ACTIVE_ALERT_ON",
+    "stop_action": "stop_all",
+    "implementation": "Firmware maps named patterns to fixed passive-buzzer frequency and duration sequences, or active-buzzer on/off control. No arbitrary audio generation."
+  },
   "motor_range_placeholder": {
     "minimum_degrees": 0,
     "maximum_degrees": 360,
-    "warning": "Verify the actual motor, driver, gearing and mechanical range before hardware deployment."
+    "warning": "Verify the actual motor, driver, gearing and mechanical range before deployment."
   },
   "quantization": {
     "status": "INT8 conversion and held-out evaluation successful",
-    "tflite_test_accuracy": 0.9859154929577465,
-    "keras_tflite_prediction_agreement": 0.971830985915493,
+    "tflite_test_accuracy": 0.9642857142857143,
+    "keras_tflite_prediction_agreement": 1.0,
     "input_scale": 0.003921568859368563,
     "input_zero_point": -128,
     "output_scale": 0.00390625,
     "output_zero_point": -128,
     "error": null
   },
-  "deployment_warning": "Reproduce the tokenizer, vocabulary ordering, multi-hot encoding, quantization and rejection rules exactly in ESP32 firmware. Verify TFLM operator support and measure tensor arena memory and inference latency on the ESP32-S3."
+  "deployment_warning": "Reproduce the tokenizer, vocabulary ordering, multi-hot encoding, quantization and rejection rules exactly in ESP32 firmware. Map buzzer pattern names to fixed firmware sound sequences. Verify TFLM operator support and measure tensor arena memory and inference latency on the ESP32-S3. Software tests do not prove physical hardware operation."
 }

@@ -173,6 +173,88 @@
       "number 8"
     ]
   },
+  "buzzer_patterns": {
+    "SHORT_BEEP": {
+      "aliases": [
+        "beep",
+        "short beep",
+        "single beep",
+        "one beep",
+        "short tone",
+        "single tone",
+        "quick beep"
+      ],
+      "device": "passive",
+      "description": "One short tone"
+    },
+    "DOUBLE_BEEP": {
+      "aliases": [
+        "double beep",
+        "two beeps",
+        "two short beeps",
+        "double tone",
+        "pair of beeps",
+        "two quick beeps"
+      ],
+      "device": "passive",
+      "description": "Two short tones"
+    },
+    "SUCCESS": {
+      "aliases": [
+        "success",
+        "success sound",
+        "success tone",
+        "confirmation sound",
+        "confirmation tone",
+        "success signal",
+        "ascending tone",
+        "rising success signal"
+      ],
+      "device": "passive",
+      "description": "Three ascending tones"
+    },
+    "ERROR": {
+      "aliases": [
+        "error",
+        "error sound",
+        "error tone",
+        "failure sound",
+        "failure signal",
+        "low error beep"
+      ],
+      "device": "passive",
+      "description": "Two low tones"
+    },
+    "ALARM": {
+      "aliases": [
+        "alarm",
+        "alarm sound",
+        "alarm pattern",
+        "warning alarm",
+        "warning sound",
+        "repeating warning sound"
+      ],
+      "device": "passive",
+      "description": "Repeating alternating tones"
+    },
+    "ACTIVE_ALERT_ON": {
+      "aliases": [
+        "active buzzer",
+        "continuous alert",
+        "continuous buzzer",
+        "steady alert",
+        "active alert",
+        "steady active buzzer",
+        "continuous buzzer alert"
+      ],
+      "device": "active",
+      "description": "Continuous active-buzzer alert"
+    }
+  },
+  "buzzer_stop_action": {
+    "action": "stop_all",
+    "description": "Stop both passive and active buzzers"
+  },
   "motor_min_degrees": 0,
   "motor_max_degrees": 360,
   "requires_explicit_device_context": true,

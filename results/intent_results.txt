@@ -2,91 +2,110 @@ AIEng4D INTENT CLASSIFIER RESULTS
 ==================================================
 
 Dataset: reconstructed, self-contained dataset
-Supported intents: 9
-Total classes: 10
-Training examples: 226
-Validation examples: 57
-Vocabulary size: 288
-Held-out examples: 71
-Classifier test accuracy: 98.59%
+Supported intents: 11
+Total classes: 12
+Training examples: 266
+Validation examples: 67
+Vocabulary size: 309
+Held-out examples: 84
+Classifier test accuracy: 96.43%
 
 CLASSIFICATION REPORT
               precision    recall  f1-score   support
 
       LED_ON       1.00      0.80      0.89         5
-     LED_OFF       0.83      1.00      0.91         5
+     LED_OFF       0.71      1.00      0.83         5
      RGB_SET       1.00      1.00      1.00         5
  MATRIX_SHOW       1.00      1.00      1.00         5
-MATRIX_CLEAR       1.00      1.00      1.00         5
+MATRIX_CLEAR       1.00      0.80      0.89         5
   MOTOR_MOVE       1.00      1.00      1.00         5
     MOTOR_CW       1.00      1.00      1.00         4
    MOTOR_CCW       1.00      1.00      1.00         4
   MOTOR_STOP       1.00      1.00      1.00         5
-     UNKNOWN       1.00      1.00      1.00        28
+ BUZZER_PLAY       0.89      1.00      0.94         8
+ BUZZER_STOP       1.00      1.00      1.00         5
+     UNKNOWN       1.00      0.96      0.98        28
 
-    accuracy                           0.99        71
-   macro avg       0.98      0.98      0.98        71
-weighted avg       0.99      0.99      0.99        71
+    accuracy                           0.96        84
+   macro avg       0.97      0.96      0.96        84
+weighted avg       0.97      0.96      0.97        84
 
 CONFUSION MATRIX
-[[ 4  1  0  0  0  0  0  0  0  0]
- [ 0  5  0  0  0  0  0  0  0  0]
- [ 0  0  5  0  0  0  0  0  0  0]
- [ 0  0  0  5  0  0  0  0  0  0]
- [ 0  0  0  0  5  0  0  0  0  0]
- [ 0  0  0  0  0  5  0  0  0  0]
- [ 0  0  0  0  0  0  4  0  0  0]
- [ 0  0  0  0  0  0  0  4  0  0]
- [ 0  0  0  0  0  0  0  0  5  0]
- [ 0  0  0  0  0  0  0  0  0 28]]
+[[ 4  1  0  0  0  0  0  0  0  0  0  0]
+ [ 0  5  0  0  0  0  0  0  0  0  0  0]
+ [ 0  0  5  0  0  0  0  0  0  0  0  0]
+ [ 0  0  0  5  0  0  0  0  0  0  0  0]
+ [ 0  1  0  0  4  0  0  0  0  0  0  0]
+ [ 0  0  0  0  0  5  0  0  0  0  0  0]
+ [ 0  0  0  0  0  0  4  0  0  0  0  0]
+ [ 0  0  0  0  0  0  0  4  0  0  0  0]
+ [ 0  0  0  0  0  0  0  0  5  0  0  0]
+ [ 0  0  0  0  0  0  0  0  0  8  0  0]
+ [ 0  0  0  0  0  0  0  0  0  0  5  0]
+ [ 0  0  0  0  0  0  0  0  0  1  0 27]]
 
 COMMAND PIPELINE TESTS
-PASS | Turn on the indicator LED                        | LED_ON
-PASS | Switch off the indicator LED                     | LED_OFF
-PASS | Set the RGB LED to purple                        | RGB_SET
-PASS | Set RGB to cyan                                  | RGB_SET
-PASS | Change the RGB module to orange                  | RGB_SET
-PASS | Move the stepper motor to 90 degrees             | MOTOR_MOVE
-PASS | Set the motor angle to 180 degrees               | MOTOR_MOVE
-PASS | Rotate the stepper clockwise                     | MOTOR_CW
-PASS | Rotate the motor counterclockwise                | MOTOR_CCW
-PASS | Stop the stepper motor                           | MOTOR_STOP
-PASS | Display a heart on the LED matrix                | MATRIX_SHOW
-PASS | Show the letter A on the matrix                  | MATRIX_SHOW
-PASS | Clear the LED matrix                             | MATRIX_CLEAR
-PASS | My name is Martel                                | Classified as UNKNOWN
-PASS | Tell me a joke                                   | Classified as UNKNOWN
-PASS | Calculate five plus seven                        | Classified as UNKNOWN
-PASS | Turn on the television                           | Classified as UNKNOWN
-PASS | Make it purple                                   | Classified as UNKNOWN
-PASS | Set RGB to purple and orange                     | Missing, invalid or ambiguous command parameters
-PASS | Move the motor somewhere                         | Confidence below threshold
-PASS | Move the motor to 900 degrees                    | Missing, invalid or ambiguous command parameters
-PASS | Move the motor to 90 and 180 degrees             | Missing, invalid or ambiguous command parameters
-PASS | Turn on the LED and turn it off                  | Confidence below threshold
-PASS | Do not turn on the LED                           | Negated command rejected
-PASS | Show something on the matrix                     | Confidence below threshold
-PASS | Show an unsupported symbol on the matrix         | Missing, invalid or ambiguous command parameters
-PASS | Clear the matrix and show a heart                | Confidence below threshold
-PASS | Rotate the motor clockwise and counterclockwise  | Missing, invalid or ambiguous command parameters
-PASS | Move the motor to 90 degrees clockwise           | Missing, invalid or ambiguous command parameters
-PASS | Stop the motor and rotate clockwise              | Missing, invalid or ambiguous command parameters
-PASS | Turn on the LED and turn it off                  | Confidence below threshold
+PASS | Turn on the indicator LED                            | LED_ON
+PASS | Switch off the indicator LED                         | LED_OFF
+PASS | Set the RGB LED to purple                            | RGB_SET
+PASS | Set RGB to cyan                                      | RGB_SET
+PASS | Change the RGB module to orange                      | RGB_SET
+PASS | Move the stepper motor to 90 degrees                 | MOTOR_MOVE
+PASS | Set the motor angle to 180 degrees                   | MOTOR_MOVE
+PASS | Rotate the stepper clockwise                         | MOTOR_CW
+PASS | Rotate the motor counterclockwise                    | MOTOR_CCW
+PASS | Stop the stepper motor                               | MOTOR_STOP
+PASS | Display a heart on the LED matrix                    | MATRIX_SHOW
+PASS | Show the letter A on the matrix                      | MATRIX_SHOW
+PASS | Clear the LED matrix                                 | MATRIX_CLEAR
+PASS | Make a short beep                                    | BUZZER_PLAY
+PASS | Play two beeps                                       | BUZZER_PLAY
+PASS | Play the success sound                               | BUZZER_PLAY
+PASS | Play an error tone on the buzzer                     | BUZZER_PLAY
+PASS | Sound the alarm                                      | BUZZER_PLAY
+PASS | Activate the active buzzer                           | BUZZER_PLAY
+PASS | Stop the buzzer                                      | BUZZER_STOP
+PASS | Turn off the active buzzer                           | BUZZER_STOP
+PASS | Silence the alarm                                    | BUZZER_STOP
+FAIL | Stop the sound                                       | Confidence below threshold
+PASS | My name is Martel                                    | Classified as UNKNOWN
+PASS | Tell me a joke                                       | Classified as UNKNOWN
+PASS | Calculate five plus seven                            | Classified as UNKNOWN
+PASS | Turn on the television                               | Confidence below threshold
+PASS | Make it purple                                       | Confidence below threshold
+PASS | Set RGB to purple and orange                         | Missing, invalid or ambiguous command parameters
+PASS | Move the motor somewhere                             | Confidence below threshold
+PASS | Move the motor to 900 degrees                        | Missing, invalid or ambiguous command parameters
+PASS | Move the motor to 90 and 180 degrees                 | Missing, invalid or ambiguous command parameters
+PASS | Turn on the LED and turn it off                      | Confidence below threshold
+PASS | Do not turn on the LED                               | Negated command rejected
+PASS | Show something on the matrix                         | Missing, invalid or ambiguous command parameters
+PASS | Show an unsupported symbol on the matrix             | Missing, invalid or ambiguous command parameters
+PASS | Clear the matrix and show a heart                    | Confidence below threshold
+PASS | Rotate the motor clockwise and counterclockwise      | Missing, invalid or ambiguous command parameters
+PASS | Move the motor to 90 degrees clockwise               | Missing, invalid or ambiguous command parameters
+PASS | Stop the motor and rotate clockwise                  | Missing, invalid or ambiguous command parameters
+PASS | Play a sound                                         | Missing, invalid or ambiguous command parameters
+PASS | Play a beep and an alarm                             | Missing, invalid or ambiguous command parameters
+PASS | Stop the buzzer and play a success sound             | Missing, invalid or ambiguous command parameters
+PASS | Do not beep                                          | Negated command rejected
+PASS | Turn on the active buzzer and stop it                | Missing, invalid or ambiguous command parameters
+PASS | Activate the buzzer                                  | Confidence below threshold
 
 PIPELINE TEST SUMMARY
-Passed: 31/31
-Pipeline test score: 100.00%
+Passed: 45/46
+Pipeline test score: 97.83%
 
 
 MODEL FILE SIZES
-Keras model: 114,064 bytes
-INT8 TFLite: 11,136 bytes
+Keras model: 120,424 bytes
+INT8 TFLite: 11,720 bytes
 
 
 INT8 EVALUATION
 INT8 conversion and held-out evaluation successful
-INT8 held-out accuracy: 98.59%
-Keras/TFLite prediction agreement: 97.18%
+INT8 held-out accuracy: 96.43%
+Keras/TFLite prediction agreement: 100.00%
 Input scale: 0.003921568859368563
 Input zero point: -128
 Output scale: 0.00390625
